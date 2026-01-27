@@ -56,7 +56,7 @@ export default function RainbowChart() {
         setErr(null);
 
         const res = await fetch(
-          "/api/rainbow?interval=daily&timespan=all&limit=5000",
+          "/api/rainbow?interval=daily&timespan=all&limit=2000",
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
@@ -219,7 +219,9 @@ export default function RainbowChart() {
             key={r}
             onClick={() => setRange(r)}
             className={`rounded-full border px-3 py-1 text-xs transition ${
-              range === r ? "bg-black text-white" : "bg-white hover:bg-neutral-50"
+              range === r
+                ? "bg-black text-white"
+                : "bg-white hover:bg-neutral-50"
             }`}
           >
             {r.toUpperCase()}
@@ -228,7 +230,7 @@ export default function RainbowChart() {
       </div>
 
       {/* Chart */}
-      <div className="h-[420px] w-full">
+      <div className="h-[105] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={filteredRows}

@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 
 const UPSTREAM = "https://charts.bitcoin.com/api/v1/charts/rainbow";
 
-// opcional: cachear 1 hora 
+// opcional: cachear 1 hora
 export const revalidate = 3600;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  // Permitimos pasar algunos params comunes del upstream 
+  // Permitimos pasar algunos params comunes del upstream
   const interval = searchParams.get("interval") ?? "daily"; // hourly | daily | weekly
-  const timespan = searchParams.get("timespan") ?? "all";   // 30d | 1y | 2y | 5y | all
+  const timespan = searchParams.get("timespan") ?? "all"; // 30d | 1y | 2y | 5y | all
   const limit = searchParams.get("limit") ?? "5000";
 
   const url = new URL(UPSTREAM);
@@ -21,16 +21,16 @@ export async function GET(req: Request) {
   try {
     const res = await fetch(url.toString(), {
       // Cache ISR en Next (server-side)
-      next: { revalidate },
+      cache: "no-store",
       headers: {
-        "accept": "application/json",
+        accept: "application/json",
       },
     });
 
     if (!res.ok) {
       return NextResponse.json(
         { error: "Upstream error", status: res.status },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
   } catch (err) {
     return NextResponse.json(
       { error: "Fetch failed", details: String(err) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
