@@ -1,4 +1,4 @@
-// import RainbowChart from './rainbow-chart';
+import RainbowChart from './rainbow-chart';
 
 export const metadata = {
   title: "Bitcoin Rainbow Chart",
@@ -17,7 +17,7 @@ export default function RainbowPage() {
           </p>
         </header>
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          {/* <RainbowChart /> */}
+          <RainbowChart />
         </div>
         <section className="rounded-2xl bordeer bg-white p-4 shadow-sm space-y-2">
           <h2 className="text-xl font-semibold">Como leerlo</h2>
