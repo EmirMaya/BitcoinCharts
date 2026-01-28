@@ -18,7 +18,6 @@ type ApiResponse = {
   series?: Record<string, unknown>;
 };
 
-type Primitive = number | string | null | undefined;
 type UnknownRecord = Record<string, unknown>;
 
 type Point = {
@@ -61,101 +60,65 @@ export default function RainbowChart() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const json: ApiResponse = await res.json();
-        const payload: unknown = json.data ?? json.prices ?? json;
 
-        // =========================
-        // Caso A/B: payload es array
-        // =========================
-        if (Array.isArray(payload)) {
-          const sample = payload[0];
-          const sampleRec: UnknownRecord = isRecord(sample) ? sample : {};
+        // Formato real:
+        // {
+        //   data: {
+        //     price: [{ timestamp, price }, ...],
+        //     <bandX>: [{ timestamp, <bandX> }, ...],
+        //     ...
+        //   }
+        // }
+        const payload: unknown = json.data ?? json;
 
-          const tKey: "t" | "time" | "timestamp" | "x" | null =
-            "t" in sampleRec
-              ? "t"
-              : "time" in sampleRec
-                ? "time"
-                : "timestamp" in sampleRec
-                  ? "timestamp"
-                  : "x" in sampleRec
-                    ? "x"
-                    : null;
-
-          const normalized: Point[] = payload.map((p) => {
-            const rec: UnknownRecord = isRecord(p) ? p : {};
-
-            const ts: Primitive =
-              tKey !== null
-                ? (rec[tKey] as Primitive)
-                : Array.isArray(p)
-                  ? (p[0] as Primitive)
-                  : null;
-
-            const obj = { date: toDateLabel(Number(ts)) } as Point;
-
-            if (tKey !== null) {
-              for (const [k, v] of Object.entries(rec)) {
-                if (k === tKey) continue;
-                if (typeof v === "number") obj[k] = v;
-              }
-            } else if (Array.isArray(p) && typeof p[1] === "number") {
-              obj.price = p[1];
-            }
-
-            return obj;
-          });
-
-          // Si hay "price" no la incluimos como banda
-          const keys = Object.keys(normalized[0] ?? {}).filter(
-            (k) => k !== "date",
-          );
-
-          setRows(normalized);
-          setSeriesKeys(keys);
-          return;
+        if (!isRecord(payload)) {
+          throw new Error("Formato de respuesta inesperado: payload no es objeto");
         }
 
-        // ==========================================
-        // Caso C: payload es objeto con series / data
-        // ==========================================
-        if (isRecord(payload)) {
-          const maybeSeries = payload["series"];
-          const seriesObj: UnknownRecord = isRecord(maybeSeries)
-            ? maybeSeries
-            : payload;
+        const seriesObj: UnknownRecord = payload;
 
-          const names = Object.keys(seriesObj);
-          const map = new Map<string, Point>();
+        const names = Object.keys(seriesObj);
+        if (names.length === 0) {
+          throw new Error("Sin series en payload");
+        }
 
-          for (const name of names) {
-            const arr = seriesObj[name];
-            if (!Array.isArray(arr)) continue;
+        const map = new Map<string, Point>();
 
-            for (const pair of arr) {
-              if (!Array.isArray(pair) || pair.length < 2) continue;
+        for (const name of names) {
+          const arr = seriesObj[name];
+          if (!Array.isArray(arr)) continue;
 
-              const ts = pair[0];
-              const val = pair[1];
+          for (const item of arr) {
+            if (!isRecord(item)) continue;
 
-              if (typeof val !== "number") continue;
+            const ts = item["timestamp"];
+            const val = item[name];
 
-              const d = toDateLabel(Number(ts));
-              const row = map.get(d) ?? ({ date: d } as Point);
+            if (typeof ts !== "number") continue;
+            if (typeof val !== "number") continue;
+
+            const d = toDateLabel(ts);
+            const row = map.get(d) ?? ({ date: d } as Point);
+
+            if (name === "price") {
+              row.price = val;
+            } else {
               row[name] = val;
-              map.set(d, row);
             }
+
+            map.set(d, row);
           }
-
-          const merged = Array.from(map.values()).sort((a, b) =>
-            a.date.localeCompare(b.date),
-          );
-
-          setRows(merged);
-          setSeriesKeys(names.filter((k) => k !== "date"));
-          return;
         }
 
-        throw new Error("Formato de respuesta inesperado");
+        const merged = Array.from(map.values()).sort((a, b) =>
+          a.date.localeCompare(b.date),
+        );
+
+        // seriesKeys: price + el resto
+        const keys = ["price", ...names.filter((n) => n !== "price")];
+
+        setRows(merged);
+        setSeriesKeys(keys);
       } catch (e: unknown) {
         setErr(getMessage(e));
       } finally {
@@ -183,6 +146,8 @@ export default function RainbowChart() {
     [seriesKeys],
   );
 
+  const hasPrice = Boolean(filteredRows[0]?.price);
+
   if (loading) {
     return <div className="p-6 text-sm text-neutral-600">Cargando datos…</div>;
   }
@@ -208,8 +173,6 @@ export default function RainbowChart() {
     );
   }
 
-  const hasPrice = Boolean(filteredRows[0]?.price);
-
   return (
     <div className="space-y-3">
       {/* Selector de rango */}
@@ -219,9 +182,7 @@ export default function RainbowChart() {
             key={r}
             onClick={() => setRange(r)}
             className={`rounded-full border px-3 py-1 text-xs transition ${
-              range === r
-                ? "bg-black text-white"
-                : "bg-white hover:bg-neutral-50"
+              range === r ? "bg-black text-white" : "bg-white hover:bg-neutral-50"
             }`}
           >
             {r.toUpperCase()}
@@ -263,7 +224,7 @@ export default function RainbowChart() {
               />
             ))}
 
-            {/* Precio como línea (si existe) */}
+            {/* Precio como línea */}
             {hasPrice && (
               <Line
                 type="monotone"
