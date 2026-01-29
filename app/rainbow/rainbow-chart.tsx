@@ -14,8 +14,6 @@ import {
 
 type ApiResponse = {
   data?: unknown;
-  prices?: unknown;
-  series?: Record<string, unknown>;
 };
 
 type UnknownRecord = Record<string, unknown>;
@@ -60,50 +58,52 @@ export default function RainbowChart() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const json: ApiResponse = await res.json();
-
-        // Formato real:
-        // {
-        //   data: {
-        //     price: [{ timestamp, price }, ...],
-        //     <bandX>: [{ timestamp, <bandX> }, ...],
-        //     ...
-        //   }
-        // }
         const payload: unknown = json.data ?? json;
 
         if (!isRecord(payload)) {
-          throw new Error("Formato de respuesta inesperado: payload no es objeto");
+          throw new Error("Formato inesperado: payload no es objeto");
         }
 
         const seriesObj: UnknownRecord = payload;
 
-        const names = Object.keys(seriesObj);
-        if (names.length === 0) {
-          throw new Error("Sin series en payload");
+        // 1) Precio: data.price = [{timestamp, price}, ...]
+        const priceArr = seriesObj["price"];
+        if (!Array.isArray(priceArr)) {
+          throw new Error("No se encontró data.price como array");
         }
 
         const map = new Map<string, Point>();
 
-        for (const name of names) {
-          const arr = seriesObj[name];
-          if (!Array.isArray(arr)) continue;
+        for (const item of priceArr) {
+          if (!isRecord(item)) continue;
 
-          for (const item of arr) {
+          const ts = item["timestamp"];
+          const val = item["price"];
+
+          if (typeof ts !== "number") continue;
+          if (typeof val !== "number") continue;
+
+          const d = toDateLabel(ts);
+          const row = map.get(d) ?? ({ date: d } as Point);
+          row.price = val;
+          map.set(d, row);
+        }
+
+        // 2) Bandas: data.zonesTimeSeries = [{timestamp, <band1>:n, <band2>:n, ...}, ...]
+        const zts = seriesObj["zonesTimeSeries"];
+        if (Array.isArray(zts) && zts.length > 0) {
+          for (const item of zts) {
             if (!isRecord(item)) continue;
 
             const ts = item["timestamp"];
-            const val = item[name];
-
             if (typeof ts !== "number") continue;
-            if (typeof val !== "number") continue;
 
             const d = toDateLabel(ts);
             const row = map.get(d) ?? ({ date: d } as Point);
 
-            if (name === "price") {
-              row.price = val;
-            } else {
-              row[name] = val;
+            for (const [k, v] of Object.entries(item)) {
+              if (k === "timestamp") continue;
+              if (typeof v === "number") row[k] = v;
             }
 
             map.set(d, row);
@@ -114,8 +114,7 @@ export default function RainbowChart() {
           a.date.localeCompare(b.date),
         );
 
-        // seriesKeys: price + el resto
-        const keys = ["price", ...names.filter((n) => n !== "price")];
+        const keys = Object.keys(merged[0] ?? {}).filter((k) => k !== "date");
 
         setRows(merged);
         setSeriesKeys(keys);
@@ -133,7 +132,6 @@ export default function RainbowChart() {
 
   const filteredRows = useMemo(() => {
     if (!hasData) return rows;
-
     if (range === "all") return rows;
 
     const days = range === "1y" ? 365 : 730;
@@ -141,24 +139,11 @@ export default function RainbowChart() {
     return rows.slice(start);
   }, [rows, range, hasData]);
 
-  const bandKeys = useMemo(() => {
-    // () => seriesKeys.filter((k) => k !== "price" && k !== "date"),
-    // [seriesKeys],
-    const blacklist = new Set([
-      'date',
-      'price',
-      'currentZone',
-      'priceZoneHistory',
-      'zones',
-      'zonesTimeSeries',
-      'success',
-      'chart',
-      'description',
-      'interval',
-      'dataPoints',
-    ]);
-    return seriesKeys.filter((k)=> !blacklist.has(k));
-}, [seriesKeys]);
+  // Paso 5.1: bandas = todo menos price/date
+  const bandKeys = useMemo(
+    () => seriesKeys.filter((k) => k !== "price" && k !== "date"),
+    [seriesKeys],
+  );
 
   const hasPrice = Boolean(filteredRows[0]?.price);
 
@@ -196,7 +181,9 @@ export default function RainbowChart() {
             key={r}
             onClick={() => setRange(r)}
             className={`rounded-full border px-3 py-1 text-xs transition ${
-              range === r ? "bg-black text-white" : "bg-white hover:bg-neutral-50"
+              range === r
+                ? "bg-black text-white"
+                : "bg-white hover:bg-neutral-50"
             }`}
           >
             {r.toUpperCase()}
@@ -205,7 +192,7 @@ export default function RainbowChart() {
       </div>
 
       {/* Chart */}
-      <div className="h-[105] w-full">
+      <div className="h-105 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={filteredRows}
@@ -213,14 +200,12 @@ export default function RainbowChart() {
             stackOffset="none"
           >
             <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={40} />
-
             <YAxis
               tick={{ fontSize: 12 }}
               width={70}
               scale="log"
               domain={["auto", "auto"]}
             />
-
             <Tooltip />
             <Legend />
 
@@ -253,8 +238,7 @@ export default function RainbowChart() {
       </div>
 
       <p className="text-xs text-neutral-500">
-        Informativo: no es consejo financiero. Próximo paso: ordenar bandas y
-        aplicar colores “rainbow” correctos.
+        Informativo: no es consejo financiero.
       </p>
     </div>
   );
