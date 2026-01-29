@@ -141,10 +141,24 @@ export default function RainbowChart() {
     return rows.slice(start);
   }, [rows, range, hasData]);
 
-  const bandKeys = useMemo(
-    () => seriesKeys.filter((k) => k !== "price" && k !== "date"),
-    [seriesKeys],
-  );
+  const bandKeys = useMemo(() => {
+    // () => seriesKeys.filter((k) => k !== "price" && k !== "date"),
+    // [seriesKeys],
+    const blacklist = new Set([
+      'date',
+      'price',
+      'currentZone',
+      'priceZoneHistory',
+      'zones',
+      'zonesTimeSeries',
+      'success',
+      'chart',
+      'description',
+      'interval',
+      'dataPoints',
+    ]);
+    return seriesKeys.filter((k)=> !blacklist.has(k));
+}, [seriesKeys]);
 
   const hasPrice = Boolean(filteredRows[0]?.price);
 
