@@ -21,8 +21,9 @@ type UnknownRecord = Record<string, unknown>;
 type Point = {
   date: string;
   price?: number;
-} & Record<Exclude<string, "date" | "price">, number | undefined>;
-
+  baseline?: number;
+  [key: string]: number | string | undefined;
+};
 type Range = "1y" | "2y" | "all";
 
 function toDateLabel(ts: number) {
@@ -40,7 +41,6 @@ function getMessage(e: unknown): string {
 
 export default function RainbowChart() {
   const [rows, setRows] = useState<Point[]>([]);
-  const [seriesKeys, setSeriesKeys] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
@@ -66,58 +66,60 @@ export default function RainbowChart() {
 
         const seriesObj: UnknownRecord = payload;
 
-        // 1) Precio: data.price = [{timestamp, price}, ...]
+        // tomo solo el precio real
         const priceArr = seriesObj["price"];
         if (!Array.isArray(priceArr)) {
           throw new Error("No se encontró data.price como array");
         }
 
-        const map = new Map<string, Point>();
-
+        const points: { ts: number; price: number }[] = [];
         for (const item of priceArr) {
           if (!isRecord(item)) continue;
-
           const ts = item["timestamp"];
           const val = item["price"];
 
           if (typeof ts !== "number") continue;
           if (typeof val !== "number") continue;
-
-          const d = toDateLabel(ts);
-          const row = map.get(d) ?? ({ date: d } as Point);
-          row.price = val;
-          map.set(d, row);
+          if (val <= 0) continue;
+          points.push({ ts, price: val });
         }
+        points.sort((a, b) => a.ts - b.ts);
 
-        // 2) Bandas: data.zonesTimeSeries = [{timestamp, <band1>:n, <band2>:n, ...}, ...]
-        const zts = seriesObj["zonesTimeSeries"];
-        if (Array.isArray(zts) && zts.length > 0) {
-          for (const item of zts) {
-            if (!isRecord(item)) continue;
+        const t0 = points[0]?.ts;
+        if (!t0) throw new Error("No hay datos de precio");
 
-            const ts = item["timestamp"];
-            if (typeof ts !== "number") continue;
+        // Baseline log-lineal
+        const xs: number[] = []; //dias desde t0
+        const ys: number[] = []; //ln(price)
 
-            const d = toDateLabel(ts);
-            const row = map.get(d) ?? ({ date: d } as Point);
-
-            for (const [k, v] of Object.entries(item)) {
-              if (k === "timestamp") continue;
-              if (typeof v === "number") row[k] = v;
-            }
-
-            map.set(d, row);
-          }
+        for (const p of points) {
+          const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
+          xs.push(days);
+          ys.push(Math.log(p.price));
         }
+        const n = xs.length;
+        const sumX = xs.reduce((acc, v) => acc + v, 0);
+        const sumY = ys.reduce((acc, v) => acc + v, 0);
+        const sumXX = xs.reduce((acc, v) => acc + v * v, 0);
+        const sumXY = xs.reduce((acc, v, i) => acc + v * ys[i], 0);
 
-        const merged = Array.from(map.values()).sort((a, b) =>
-          a.date.localeCompare(b.date),
-        );
+        const denom = n * sumXX - sumX * sumX;
+        const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+        const a = n === 0 ? 0 : (sumY - b * sumX) / n;
 
-        const keys = Object.keys(merged[0] ?? {}).filter((k) => k !== "date");
+        // generamos rows con price + baseline
+        const merged: Point[] = points.map((p) => {
+          const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
+          const baseline = Math.exp(a + b * days);
+
+          return {
+            date: toDateLabel(p.ts),
+            price: p.price,
+            baseline,
+          };
+        });
 
         setRows(merged);
-        setSeriesKeys(keys);
       } catch (e: unknown) {
         setErr(getMessage(e));
       } finally {
@@ -128,7 +130,7 @@ export default function RainbowChart() {
     run();
   }, []);
 
-  const hasData = rows.length > 0 && seriesKeys.length > 0;
+  const hasData = rows.length > 0;
 
   const filteredRows = useMemo(() => {
     if (!hasData) return rows;
@@ -139,13 +141,8 @@ export default function RainbowChart() {
     return rows.slice(start);
   }, [rows, range, hasData]);
 
-  // Paso 5.1: bandas = todo menos price/date
-  const bandKeys = useMemo(
-    () => seriesKeys.filter((k) => k !== "price" && k !== "date"),
-    [seriesKeys],
-  );
-
   const hasPrice = Boolean(filteredRows[0]?.price);
+  const hasBaseline = Boolean(filteredRows[0]?.baseline);
 
   if (loading) {
     return <div className="p-6 text-sm text-neutral-600">Cargando datos…</div>;
@@ -210,18 +207,7 @@ export default function RainbowChart() {
             <Legend />
 
             {/* Bandas apiladas */}
-            {bandKeys.map((k) => (
-              <Area
-                key={k}
-                type="monotone"
-                dataKey={k}
-                stackId="rainbow"
-                strokeWidth={0}
-                dot={false}
-                fillOpacity={0.18}
-                isAnimationActive={false}
-              />
-            ))}
+     
 
             {/* Precio como línea */}
             {hasPrice && (
