@@ -40,18 +40,30 @@ function getMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Error";
 }
 
-// Paso 5.3: 9 bandas alrededor del baseline (multiplicadores)
-// (En el 5.4 las calibramos si querés)
+// Paso 5.3: 9 bandas (multiplicadores)
 const BAND_MULTIPLIERS = [
-  0.25, // band_0 (más baja)
+  0.25,
   0.4,
   0.65,
-  1.0,  // band_3 (baseline)
+  1.0,
   1.6,
   2.6,
   4.2,
   6.8,
-  11.0, // band_8 (más alta)
+  11.0,
+] as const;
+
+// ✅ colores temporales (Paso 5.4: vienen del API)
+const FALLBACK_BAND_COLORS = [
+  "#0044FF",
+  "#0088FF",
+  "#00FFFF",
+  "#88FF00",
+  "#FFFF00",
+  "#FFCC00",
+  "#FF8800",
+  "#FF4400",
+  "#FF0000",
 ] as const;
 
 export default function RainbowChart() {
@@ -104,7 +116,7 @@ export default function RainbowChart() {
         const t0 = points[0]?.ts;
         if (!t0) throw new Error("No hay datos de precio");
 
-        // 2) Baseline log-lineal (regresión de ln(price) vs tiempo)
+        // 2) Baseline log-lineal
         const xs: number[] = [];
         const ys: number[] = [];
 
@@ -124,7 +136,7 @@ export default function RainbowChart() {
         const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
         const a = n === 0 ? 0 : (sumY - b * sumX) / n;
 
-        // 3) Rows: price + baseline + band_0..band_8
+        // 3) Rows con layers band_0..band_8
         const merged: Point[] = points.map((p) => {
           const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
           const baseline = Math.exp(a + b * days);
@@ -135,9 +147,10 @@ export default function RainbowChart() {
             baseline,
           };
 
-          // bandas (en valor absoluto)
+          // ✅ layers para stack
           BAND_MULTIPLIERS.forEach((m, i) => {
-            row[`band_${i}`] = baseline * m;
+            const prev = i === 0 ? 0 : BAND_MULTIPLIERS[i - 1];
+            row[`band_${i}`] = baseline * (m - prev);
           });
 
           return row;
@@ -165,13 +178,13 @@ export default function RainbowChart() {
     return rows.slice(start);
   }, [rows, range, hasData]);
 
-  // Paso 5.3: keys de bandas
   const bandKeys = useMemo(
     () => BAND_MULTIPLIERS.map((_, i) => `band_${i}`),
     [],
   );
 
   const hasPrice = Boolean(filteredRows[0]?.price);
+  const hasBaseline = Boolean(filteredRows[0]?.baseline);
 
   if (loading) {
     return <div className="p-6 text-sm text-neutral-600">Cargando datos…</div>;
@@ -217,7 +230,7 @@ export default function RainbowChart() {
         ))}
       </div>
 
-      {/* Chart (Paso 5.3: bandas + price) */}
+      {/* Chart (Paso 5.3: bandas + baseline + price) */}
       <div className="h-105 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -233,21 +246,36 @@ export default function RainbowChart() {
               domain={["auto", "auto"]}
             />
             <Tooltip />
+
+            {/* Si querés, ocultamos legend por ahora para que no “ensucie” */}
             <Legend />
 
-            {/* Bandas (por ahora sin colores; en 5.4 aplicamos rainbow real) */}
-            {bandKeys.map((k) => (
+            {/* ✅ Bandas apiladas (con fill/stroke explícitos para que SE VEAN) */}
+            {bandKeys.map((k, idx) => (
               <Area
                 key={k}
                 type="monotone"
                 dataKey={k}
                 stackId="rainbow"
-                strokeWidth={0}
                 dot={false}
-                fillOpacity={0.18}
                 isAnimationActive={false}
+                stroke={FALLBACK_BAND_COLORS[idx % FALLBACK_BAND_COLORS.length]}
+                fill={FALLBACK_BAND_COLORS[idx % FALLBACK_BAND_COLORS.length]}
+                fillOpacity={0.25}
+                strokeWidth={0.5}
               />
             ))}
+
+            {/* Baseline (línea central) */}
+            {hasBaseline && (
+              <Line
+                type="monotone"
+                dataKey="baseline"
+                dot={false}
+                strokeWidth={2}
+                isAnimationActive={false}
+              />
+            )}
 
             {/* Precio */}
             {hasPrice && (
@@ -264,8 +292,7 @@ export default function RainbowChart() {
       </div>
 
       <p className="text-xs text-neutral-500">
-        Informativo: no es consejo financiero. Paso 5.3: generamos 9 bandas
-        desde el baseline (multiplicadores) y mostramos el precio encima.
+        Informativo: no es consejo financiero.
       </p>
     </div>
   );
