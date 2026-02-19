@@ -246,9 +246,9 @@ export default function RainbowChart() {
                   key={k}
                   type="monotone"
                   dataKey={k}
-                  baseLine={
-                    prevKey ? (d: any) => Number(d[prevKey] ?? EPS) : EPS
-                  }
+                  // baseLine={
+                  //   prevKey ? (d: any) => Number(d[prevKey] ?? EPS) : EPS
+                  // }
                   stroke={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                   fill={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                   fillOpacity={0.25}
