@@ -22,10 +22,8 @@ type Point = {
   date: string;
   price?: number;
   baseline?: number;
-  [key: string]: number | string | undefined;
+  [key: string]: number | string | [number, number] | undefined;
 };
-
-type Range = "1y" | "2y" | "all";
 
 function toDateLabel(ts: number) {
   const ms = ts < 10_000_000_000 ? ts * 1000 : ts;
@@ -65,7 +63,6 @@ export default function RainbowChart() {
   const [rows, setRows] = useState<Point[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [range, setRange] = useState<Range>("all");
 
   useEffect(() => {
     const run = async () => {
@@ -128,7 +125,7 @@ export default function RainbowChart() {
         const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
         const a = n === 0 ? 0 : (sumY - b * sumX) / n;
 
-        // 3) Rows: price + baseline + zonas absolutas zone_0..zone_8
+        // 3) Rows: price + baseline + zonas y bandas [lower, upper]
         const merged: Point[] = points.map((p) => {
           const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
           const baseline = Math.exp(a + b * days);
@@ -139,9 +136,16 @@ export default function RainbowChart() {
             baseline,
           };
 
-          // ✅ zonas absolutas (no layers)
+          // Zonas absolutas (límites)
           BAND_MULTIPLIERS.forEach((m, i) => {
             row[`zone_${i}`] = Math.max(EPS, baseline * m);
+          });
+
+          // Bandas por rango: [límite inferior, límite superior]
+          BAND_MULTIPLIERS.forEach((_, i) => {
+            const upper = Number(row[`zone_${i}`] ?? EPS);
+            const lower = i === 0 ? EPS : Number(row[`zone_${i - 1}`] ?? EPS);
+            row[`band_${i}`] = [Math.max(EPS, lower), Math.max(EPS, upper)];
           });
 
           return row;
@@ -159,23 +163,15 @@ export default function RainbowChart() {
   }, []);
 
   const hasData = rows.length > 0;
+  const allRows = rows;
 
-  const filteredRows = useMemo(() => {
-    if (!hasData) return rows;
-    if (range === "all") return rows;
-
-    const days = range === "1y" ? 365 : 730;
-    const start = rows.length > days ? rows.length - days : 0;
-    return rows.slice(start);
-  }, [rows, range, hasData]);
-
-  const zoneKeys = useMemo(
-    () => BAND_MULTIPLIERS.map((_, i) => `zone_${i}`),
+  const bandKeys = useMemo(
+    () => BAND_MULTIPLIERS.map((_, i) => `band_${i}`),
     [],
   );
 
-  const hasPrice = Boolean(filteredRows[0]?.price);
-  const hasBaseline = Boolean(filteredRows[0]?.baseline);
+  const hasPrice = Boolean(allRows[0]?.price);
+  const hasBaseline = Boolean(allRows[0]?.baseline);
 
   if (loading) {
     return <div className="p-6 text-sm text-neutral-600">Cargando datos…</div>;
@@ -204,28 +200,13 @@ export default function RainbowChart() {
 
   return (
     <div className="space-y-3">
-      {/* Selector de rango */}
-      <div className="flex gap-2">
-        {(["1y", "2y", "all"] as const).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`rounded-full border px-3 py-1 text-xs transition ${
-              range === r
-                ? "bg-black text-white"
-                : "bg-white hover:bg-neutral-50"
-            }`}
-          >
-            {r.toUpperCase()}
-          </button>
-        ))}
-      </div>
+      <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
       <div className="h-105 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={filteredRows}
+            data={allRows}
             margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
           >
             <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={40} />
@@ -238,26 +219,21 @@ export default function RainbowChart() {
             <Tooltip />
             <Legend />
 
-            {/* ✅ Bandas visibles en log: Area con baseLine */}
-            {zoneKeys.map((k, idx) => {
-              const prevKey = idx === 0 ? null : zoneKeys[idx - 1];
-              return (
-                <Area
-                  key={k}
-                  type="monotone"
-                  dataKey={k}
-                  // baseLine={
-                  //   prevKey ? (d: any) => Number(d[prevKey] ?? EPS) : EPS
-                  // }
-                  stroke={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
-                  fill={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
-                  fillOpacity={0.25}
-                  strokeWidth={0.5}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              );
-            })}
+            {/* Bandas arcoiris en log: cada área es un rango [lower, upper] */}
+            {bandKeys.map((k, idx) => (
+              <Area
+                key={k}
+                type="monotone"
+                dataKey={k}
+                stroke={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
+                fill={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
+                fillOpacity={0.35}
+                strokeWidth={0.6}
+                dot={false}
+                isAnimationActive={false}
+                connectNulls
+              />
+            ))}
 
             {/* Baseline (línea central) */}
             {hasBaseline && (
