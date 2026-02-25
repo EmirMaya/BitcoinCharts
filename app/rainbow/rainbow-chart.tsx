@@ -11,6 +11,7 @@ import {
   Legend,
   Line,
 } from "recharts";
+import { scaleSymlog } from "d3-scale";
 
 type ApiResponse = {
   data?: unknown;
@@ -28,6 +29,10 @@ type Point = {
 function toDateLabel(ts: number) {
   const ms = ts < 10_000_000_000 ? ts * 1000 : ts;
   return new Date(ms).toISOString().slice(0, 10);
+}
+
+function toMs(ts: number) {
+  return ts < 10_000_000_000 ? ts * 1000 : ts;
 }
 
 function isRecord(v: unknown): v is UnknownRecord {
@@ -58,6 +63,10 @@ const FALLBACK_ZONE_COLORS = [
 
 // epsilon para log (nunca 0)
 const EPS = 1e-9;
+const DAY_MS = 1000 * 60 * 60 * 24;
+const BITCOIN_GENESIS_MS = Date.UTC(2009, 0, 3);
+const CHART_START_DATE = "2012-01-01";
+const CHART_END_MS = Date.UTC(2028, 0, 1);
 
 export default function RainbowChart() {
   const [rows, setRows] = useState<Point[]>([]);
@@ -90,7 +99,7 @@ export default function RainbowChart() {
           throw new Error("No se encontró data.price como array");
         }
 
-        const points: { ts: number; price: number }[] = [];
+        const points: { tsMs: number; price: number }[] = [];
         for (const item of priceArr) {
           if (!isRecord(item)) continue;
           const ts = item["timestamp"];
@@ -98,20 +107,21 @@ export default function RainbowChart() {
           if (typeof ts !== "number") continue;
           if (typeof val !== "number") continue;
           if (val <= 0) continue;
-          points.push({ ts, price: val });
+          points.push({ tsMs: toMs(ts), price: val });
         }
-        points.sort((a, b) => a.ts - b.ts);
+        points.sort((a, b) => a.tsMs - b.tsMs);
 
-        const t0 = points[0]?.ts;
-        if (!t0) throw new Error("No hay datos de precio");
+        const firstTs = points[0]?.tsMs;
+        if (!firstTs) throw new Error("No hay datos de precio");
 
-        // 2) Baseline log-lineal (regresión ln(price) vs días)
+        // 2) Baseline tipo potencia (regresión ln(price) vs ln(days + 1))
+        // Esto genera bandas curvas en eje Y logarítmico.
         const xs: number[] = [];
         const ys: number[] = [];
 
         for (const p of points) {
-          const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
-          xs.push(days);
+          const days = Math.max(0, (p.tsMs - BITCOIN_GENESIS_MS) / DAY_MS);
+          xs.push(Math.log(days + 1));
           ys.push(Math.log(p.price));
         }
 
@@ -126,13 +136,14 @@ export default function RainbowChart() {
         const a = n === 0 ? 0 : (sumY - b * sumX) / n;
 
         // 3) Rows: price + baseline + zonas y bandas [lower, upper]
-        const merged: Point[] = points.map((p) => {
-          const days = (p.ts - t0) / (1000 * 60 * 60 * 24);
-          const baseline = Math.exp(a + b * days);
+        const buildRow = (tsMs: number, price?: number): Point => {
+          const days = Math.max(0, (tsMs - BITCOIN_GENESIS_MS) / DAY_MS);
+          const x = Math.log(days + 1);
+          const baseline = Math.exp(a + b * x);
 
           const row: Point = {
-            date: toDateLabel(p.ts),
-            price: p.price,
+            date: toDateLabel(tsMs),
+            price,
             baseline,
           };
 
@@ -141,15 +152,34 @@ export default function RainbowChart() {
             row[`zone_${i}`] = Math.max(EPS, baseline * m);
           });
 
-          // Bandas por rango: [límite inferior, límite superior]
-          BAND_MULTIPLIERS.forEach((_, i) => {
-            const upper = Number(row[`zone_${i}`] ?? EPS);
-            const lower = i === 0 ? EPS : Number(row[`zone_${i - 1}`] ?? EPS);
+          // Bandas por rango entre límites consecutivos: [zone_i, zone_{i+1}]
+          for (let i = 0; i < BAND_MULTIPLIERS.length - 1; i += 1) {
+            const lower = Number(row[`zone_${i}`] ?? EPS);
+            const upper = Number(row[`zone_${i + 1}`] ?? EPS);
             row[`band_${i}`] = [Math.max(EPS, lower), Math.max(EPS, upper)];
-          });
+          }
+          // Banda superior final para no dejar hueco arriba
+          {
+            const i = BAND_MULTIPLIERS.length - 1;
+            const lower = Number(row[`zone_${i}`] ?? EPS);
+            const upper = Math.max(EPS, lower * 1.35);
+            row[`band_${i}`] = [Math.max(EPS, lower), upper];
+          }
 
           return row;
-        });
+        };
+
+        const merged: Point[] = points.map((p) => buildRow(p.tsMs, p.price));
+
+        // Extiende el eje X hasta 2028-01-01 aunque no haya precio real.
+        const lastTsMs = points[points.length - 1]?.tsMs ?? firstTs;
+        if (lastTsMs < CHART_END_MS) {
+          let ts = lastTsMs + DAY_MS;
+          while (ts <= CHART_END_MS) {
+            merged.push(buildRow(ts));
+            ts += DAY_MS;
+          }
+        }
 
         setRows(merged);
       } catch (e: unknown) {
@@ -162,8 +192,11 @@ export default function RainbowChart() {
     run();
   }, []);
 
-  const hasData = rows.length > 0;
-  const allRows = rows;
+  const allRows = useMemo(
+    () => rows.filter((row) => row.date >= CHART_START_DATE),
+    [rows],
+  );
+  const hasData = allRows.length > 0;
 
   const bandKeys = useMemo(
     () => BAND_MULTIPLIERS.map((_, i) => `band_${i}`),
@@ -172,6 +205,35 @@ export default function RainbowChart() {
 
   const hasPrice = Boolean(allRows[0]?.price);
   const hasBaseline = Boolean(allRows[0]?.baseline);
+  // c=1 aproxima mejor distancias por década sin perder el 0 visible.
+  const yScale = useMemo(() => scaleSymlog().constant(1), []);
+  const yTicks = useMemo(() => {
+    let maxY = 10;
+    for (const row of allRows) {
+      for (const v of Object.values(row)) {
+        if (typeof v === "number" && Number.isFinite(v)) {
+          maxY = Math.max(maxY, v);
+        }
+      }
+    }
+    const maxExp = Math.max(1, Math.ceil(Math.log10(maxY)));
+    const ticks: number[] = [0];
+    for (let exp = 0; exp <= maxExp; exp += 1) {
+      const decade = 10 ** exp;
+      for (let m = 1; m <= 9; m += 1) {
+        const t = m * decade;
+        if (t <= 10 ** maxExp) ticks.push(t);
+      }
+    }
+    return ticks;
+  }, [allRows]);
+  const yTickFormatter = (v: number) => {
+    if (v === 0) return "0";
+    const exp = Math.log10(v);
+    const isMajor = Math.abs(exp - Math.round(exp)) < 1e-10 && v >= 10;
+    if (!isMajor) return "";
+    return Intl.NumberFormat("en-US").format(v);
+  };
 
   if (loading) {
     return <div className="p-6 text-sm text-neutral-600">Cargando datos…</div>;
@@ -203,7 +265,7 @@ export default function RainbowChart() {
       <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
-      <div className="h-105 w-full">
+      <div className="h-[40rem] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={allRows}
@@ -213,8 +275,11 @@ export default function RainbowChart() {
             <YAxis
               tick={{ fontSize: 12 }}
               width={70}
-              scale="log"
-              domain={["auto", "auto"]}
+              scale={yScale}
+              domain={[0, "dataMax"]}
+              ticks={yTicks}
+              tickFormatter={yTickFormatter}
+              allowDataOverflow
             />
             <Tooltip />
             <Legend />

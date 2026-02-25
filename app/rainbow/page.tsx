@@ -8,7 +8,7 @@ export const metadata = {
 export default function RainbowPage() {
   return (
     <main className="min-h-screen px-4 py-10">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold">Bitcoin Rainbow Chart</h1>
           <p className="text-sm text-neutral-600">
