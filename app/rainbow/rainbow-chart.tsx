@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   Line,
+  ReferenceLine,
 } from "recharts";
 import { scaleSymlog } from "d3-scale";
 
@@ -47,6 +48,7 @@ function getMessage(e: unknown): string {
 const BAND_MULTIPLIERS = [
   0.25, 0.4, 0.65, 1.0, 1.6, 2.6, 4.2, 6.8, 11.0,
 ] as const;
+const BAND_TIGHTENING = 0.80;
 
 // colores temporales (después los reemplazamos por metadata.zoneColors del API)
 const FALLBACK_ZONE_COLORS = [
@@ -79,6 +81,12 @@ const DAY_MS = 1000 * 60 * 60 * 24;
 const BITCOIN_GENESIS_MS = Date.UTC(2009, 0, 3);
 const CHART_START_DATE = "2012-01-01";
 const CHART_END_MS = Date.UTC(2028, 0, 1);
+const HALVING_DATES = [
+  "2012-11-28",
+  "2016-07-09",
+  "2020-05-11",
+  "2024-04-20",
+] as const;
 
 type LegendPayloadEntry = {
   color?: string;
@@ -167,7 +175,8 @@ export default function RainbowChart() {
 
           // Zonas absolutas (límites)
           BAND_MULTIPLIERS.forEach((m, i) => {
-            row[`zone_${i}`] = Math.max(EPS, baseline * m);
+            const tightenedMultiplier = Math.exp(Math.log(m) * BAND_TIGHTENING);
+            row[`zone_${i}`] = Math.max(EPS, baseline * tightenedMultiplier);
           });
 
           // Bandas por rango entre límites consecutivos: [zone_i, zone_{i+1}]
@@ -220,6 +229,16 @@ export default function RainbowChart() {
     () => BAND_MULTIPLIERS.map((_, i) => `band_${i}`),
     [],
   );
+  const halvingMarkers = useMemo(() => {
+    if (allRows.length === 0) return [];
+    return HALVING_DATES.map((targetDate) => {
+      const exact = allRows.find((row) => row.date === targetDate);
+      if (exact) return exact.date;
+      const firstAfter = allRows.find((row) => row.date > targetDate);
+      if (firstAfter) return firstAfter.date;
+      return allRows[allRows.length - 1]?.date;
+    }).filter((date): date is string => typeof date === "string");
+  }, [allRows]);
 
   const hasPrice = Boolean(allRows[0]?.price);
   // c=1 aproxima mejor distancias por década sin perder el 0 visible.
@@ -372,6 +391,17 @@ export default function RainbowChart() {
               }}
             />
             <Legend content={renderLegend} />
+
+            {halvingMarkers.map((date) => (
+              <ReferenceLine
+                key={`halving-${date}`}
+                x={date}
+                stroke="#64748b"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                ifOverflow="extendDomain"
+              />
+            ))}
 
             {/* Bandas arcoiris en log: cada área es un rango [lower, upper] */}
             {bandKeys.map((k, idx) => (
