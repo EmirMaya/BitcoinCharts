@@ -21,6 +21,7 @@ type ApiResponse = {
 type UnknownRecord = Record<string, unknown>;
 
 type Point = {
+  ts: number;
   date: string;
   price?: number;
   baseline?: number;
@@ -34,6 +35,14 @@ function toDateLabel(ts: number) {
 
 function toMs(ts: number) {
   return ts < 10_000_000_000 ? ts * 1000 : ts;
+}
+
+function dateStrToUtcMs(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+    return NaN;
+  }
+  return Date.UTC(y, m - 1, d);
 }
 
 function isRecord(v: unknown): v is UnknownRecord {
@@ -79,7 +88,7 @@ const BAND_LABELS: string[] = [
 const EPS = 1e-9;
 const DAY_MS = 1000 * 60 * 60 * 24;
 const BITCOIN_GENESIS_MS = Date.UTC(2009, 0, 3);
-const CHART_START_DATE = "2012-01-01";
+const CHART_START_MS = Date.UTC(2012, 0, 1);
 const CHART_END_MS = Date.UTC(2028, 0, 1);
 const HALVING_DATES = [
   "2012-11-28",
@@ -87,6 +96,17 @@ const HALVING_DATES = [
   "2020-05-11",
   "2024-04-20",
 ] as const;
+const HALVING_LINE_COLOR = "#374151";
+const HALVING_LINE_DASH = "6 6";
+const HALVING_LABEL = {
+  value: "Halving",
+  position: "insideBottom" as const,
+  fill: "#6b7280",
+  fontSize: 10,
+  offset: 8,
+};
+const GUIDE_LINE_COLOR = "#d1d5db";
+const GUIDE_LINE_DASH = "3 6";
 
 type LegendPayloadEntry = {
   color?: string;
@@ -168,6 +188,7 @@ export default function RainbowChart() {
           const baseline = Math.exp(a + b * x);
 
           const row: Point = {
+            ts: tsMs,
             date: toDateLabel(tsMs),
             price,
             baseline,
@@ -219,10 +240,7 @@ export default function RainbowChart() {
     run();
   }, []);
 
-  const allRows = useMemo(
-    () => rows.filter((row) => row.date >= CHART_START_DATE),
-    [rows],
-  );
+  const allRows = useMemo(() => rows.filter((row) => row.ts >= CHART_START_MS), [rows]);
   const hasData = allRows.length > 0;
 
   const bandKeys = useMemo(
@@ -231,13 +249,30 @@ export default function RainbowChart() {
   );
   const halvingMarkers = useMemo(() => {
     if (allRows.length === 0) return [];
-    return HALVING_DATES.map((targetDate) => {
-      const exact = allRows.find((row) => row.date === targetDate);
-      if (exact) return exact.date;
-      const firstAfter = allRows.find((row) => row.date > targetDate);
-      if (firstAfter) return firstAfter.date;
-      return allRows[allRows.length - 1]?.date;
-    }).filter((date): date is string => typeof date === "string");
+    const minTs = allRows[0]?.ts ?? CHART_START_MS;
+    const maxTs = allRows[allRows.length - 1]?.ts ?? CHART_END_MS;
+    return HALVING_DATES.map((date) => dateStrToUtcMs(date)).filter(
+      (ts): ts is number => Number.isFinite(ts) && ts >= minTs && ts <= maxTs,
+    );
+  }, [allRows]);
+  const xGuideMarkers = useMemo(() => {
+    if (allRows.length === 0) return [];
+    const firstTs = allRows[0]?.ts;
+    const lastTs = allRows[allRows.length - 1]?.ts;
+    if (!Number.isFinite(firstTs) || !Number.isFinite(lastTs)) return [];
+    const startYear = new Date(firstTs).getUTCFullYear();
+    const endYear = new Date(lastTs).getUTCFullYear();
+    if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) return [];
+
+    const markers: number[] = [];
+    for (let year = startYear; year <= endYear; year += 1) {
+      if (year % 2 !== 0) continue;
+      const ts = Date.UTC(year, 0, 1);
+      if (ts >= firstTs && ts <= lastTs) {
+        markers.push(ts);
+      }
+    }
+    return markers;
   }, [allRows]);
 
   const hasPrice = Boolean(allRows[0]?.price);
@@ -246,7 +281,8 @@ export default function RainbowChart() {
   const yTicks = useMemo(() => {
     let maxY = 10;
     for (const row of allRows) {
-      for (const v of Object.values(row)) {
+      for (const [key, v] of Object.entries(row)) {
+        if (key === "ts") continue;
         if (typeof v === "number" && Number.isFinite(v)) {
           maxY = Math.max(maxY, v);
         }
@@ -260,6 +296,23 @@ export default function RainbowChart() {
         const t = m * decade;
         if (t <= 10 ** maxExp) ticks.push(t);
       }
+    }
+    return ticks;
+  }, [allRows]);
+  const yGuideTicks = useMemo(() => {
+    let maxY = 10;
+    for (const row of allRows) {
+      for (const [key, v] of Object.entries(row)) {
+        if (key === "ts") continue;
+        if (typeof v === "number" && Number.isFinite(v)) {
+          maxY = Math.max(maxY, v);
+        }
+      }
+    }
+    const maxExp = Math.max(1, Math.ceil(Math.log10(maxY)));
+    const ticks = [0];
+    for (let exp = 0; exp <= maxExp; exp += 1) {
+      ticks.push(10 ** exp);
     }
     return ticks;
   }, [allRows]);
@@ -358,7 +411,15 @@ export default function RainbowChart() {
             data={allRows}
             margin={{ top: 10, right: 20, bottom: 72, left: 0 }}
           >
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={40} />
+            <XAxis
+              dataKey="ts"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tick={{ fontSize: 12 }}
+              minTickGap={40}
+              tickFormatter={(value) => toDateLabel(Number(value))}
+            />
             <YAxis
               tick={{ fontSize: 12 }}
               width={70}
@@ -369,6 +430,7 @@ export default function RainbowChart() {
               allowDataOverflow
             />
             <Tooltip
+              labelFormatter={(label) => toDateLabel(Number(label))}
               formatter={(value) => {
                 if (Array.isArray(value) && value.length === 2) {
                   const low = Number(value[0]);
@@ -392,13 +454,27 @@ export default function RainbowChart() {
             />
             <Legend content={renderLegend} />
 
+            {yGuideTicks.map((value) => (
+              <ReferenceLine
+                key={`guide-y-${value}`}
+                y={value}
+                stroke={GUIDE_LINE_COLOR}
+                strokeWidth={1}
+                strokeOpacity={0.9}
+                strokeDasharray={GUIDE_LINE_DASH}
+                ifOverflow="extendDomain"
+              />
+            ))}
+
             {halvingMarkers.map((date) => (
               <ReferenceLine
                 key={`halving-${date}`}
                 x={date}
-                stroke="#64748b"
-                strokeWidth={1}
-                strokeDasharray="4 4"
+                stroke={HALVING_LINE_COLOR}
+                strokeWidth={2}
+                strokeOpacity={1}
+                strokeDasharray={HALVING_LINE_DASH}
+                label={HALVING_LABEL}
                 ifOverflow="extendDomain"
               />
             ))}
@@ -417,6 +493,18 @@ export default function RainbowChart() {
                 dot={false}
                 isAnimationActive={false}
                 connectNulls
+              />
+            ))}
+
+            {xGuideMarkers.map((date) => (
+              <ReferenceLine
+                key={`guide-x-${date}`}
+                x={date}
+                stroke={GUIDE_LINE_COLOR}
+                strokeWidth={1}
+                strokeOpacity={1}
+                strokeDasharray={GUIDE_LINE_DASH}
+                ifOverflow="extendDomain"
               />
             ))}
 
