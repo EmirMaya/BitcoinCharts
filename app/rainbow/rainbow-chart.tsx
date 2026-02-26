@@ -61,12 +61,30 @@ const FALLBACK_ZONE_COLORS = [
   "#FF0000",
 ] as const;
 
+const BAND_LABELS: string[] = [
+  "Bitcoin está muerto",
+  "Zona de venta masiva",
+  "Compra!",
+  "Buena zona de acumulación",
+  "Todavia está en descuento",
+  "HODL!",
+  "Empieza la burbuja?",
+  "Toma de ganancias",
+  "Burbuja 100% VENDE!",
+];
+
 // epsilon para log (nunca 0)
 const EPS = 1e-9;
 const DAY_MS = 1000 * 60 * 60 * 24;
 const BITCOIN_GENESIS_MS = Date.UTC(2009, 0, 3);
 const CHART_START_DATE = "2012-01-01";
 const CHART_END_MS = Date.UTC(2028, 0, 1);
+
+type LegendPayloadEntry = {
+  color?: string;
+  dataKey?: unknown;
+  value?: string;
+};
 
 export default function RainbowChart() {
   const [rows, setRows] = useState<Point[]>([]);
@@ -204,7 +222,6 @@ export default function RainbowChart() {
   );
 
   const hasPrice = Boolean(allRows[0]?.price);
-  const hasBaseline = Boolean(allRows[0]?.baseline);
   // c=1 aproxima mejor distancias por década sin perder el 0 visible.
   const yScale = useMemo(() => scaleSymlog().constant(1), []);
   const yTicks = useMemo(() => {
@@ -233,6 +250,57 @@ export default function RainbowChart() {
     const isMajor = Math.abs(exp - Math.round(exp)) < 1e-10 && v >= 10;
     if (!isMajor) return "";
     return Intl.NumberFormat("en-US").format(v);
+  };
+  const usdFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2,
+      }),
+    [],
+  );
+  const renderLegend = ({
+    payload,
+  }: {
+    payload?: readonly LegendPayloadEntry[];
+  }) => {
+    if (!payload || payload.length === 0) return null;
+    const byKey = new Map<string, LegendPayloadEntry>();
+    for (const entry of payload) {
+      byKey.set(String(entry.dataKey ?? ""), entry);
+    }
+    const firstRowKeys = ["band_0", "band_1", "band_2", "band_3", "band_4"];
+    const secondRowKeys = ["band_5", "band_6", "band_7", "band_8", "price"];
+    const firstRow = firstRowKeys
+      .map((k) => byKey.get(k))
+      .filter((v): v is LegendPayloadEntry => Boolean(v));
+    const secondRow = secondRowKeys
+      .map((k) => byKey.get(k))
+      .filter((v): v is LegendPayloadEntry => Boolean(v));
+
+    const renderChip = (entry: LegendPayloadEntry) => (
+      <span
+        key={String(entry.dataKey ?? entry.value)}
+        className="rounded-md border px-3 py-1 text-[13px] leading-tight"
+        style={{
+          color: entry.color,
+          borderColor: entry.color,
+          backgroundColor: "rgba(255,255,255,0.55)",
+        }}
+      >
+        {entry.value}
+      </span>
+    );
+
+    return (
+      <div className="px-3 pt-8 pb-2">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-3">{firstRow.map(renderChip)}</div>
+        <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-3">
+          {secondRow.map(renderChip)}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -265,11 +333,11 @@ export default function RainbowChart() {
       <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
-      <div className="h-[40rem] w-full">
+      <div className="h-160 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={allRows}
-            margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+            margin={{ top: 10, right: 20, bottom: 72, left: 0 }}
           >
             <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={40} />
             <YAxis
@@ -281,8 +349,29 @@ export default function RainbowChart() {
               tickFormatter={yTickFormatter}
               allowDataOverflow
             />
-            <Tooltip />
-            <Legend />
+            <Tooltip
+              formatter={(value) => {
+                if (Array.isArray(value) && value.length === 2) {
+                  const low = Number(value[0]);
+                  const high = Number(value[1]);
+                  return `${usdFormatter.format(low)} ~ ${usdFormatter.format(high)}`;
+                }
+                if (typeof value === "number" && Number.isFinite(value)) {
+                  return usdFormatter.format(value);
+                }
+                return String(value);
+              }}
+              itemSorter={(item) => {
+                const key = String(item?.dataKey ?? "");
+                if (key.startsWith("band_")) {
+                  const idx = Number(key.replace("band_", ""));
+                  return Number.isFinite(idx) ? -idx : 0;
+                }
+                if (key === "price") return 1_000_000;
+                return 0;
+              }}
+            />
+            <Legend content={renderLegend} />
 
             {/* Bandas arcoiris en log: cada área es un rango [lower, upper] */}
             {bandKeys.map((k, idx) => (
@@ -290,6 +379,7 @@ export default function RainbowChart() {
                 key={k}
                 type="monotone"
                 dataKey={k}
+                name={BAND_LABELS[idx] ?? k}
                 stroke={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                 fill={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                 fillOpacity={0.35}
@@ -300,23 +390,14 @@ export default function RainbowChart() {
               />
             ))}
 
-            {/* Baseline (línea central) */}
-            {hasBaseline && (
-              <Line
-                type="monotone"
-                dataKey="baseline"
-                dot={false}
-                strokeWidth={2}
-                isAnimationActive={false}
-              />
-            )}
-
             {/* Precio */}
             {hasPrice && (
               <Line
                 type="monotone"
                 dataKey="price"
+                name="precio"
                 dot={false}
+                stroke="#1f2937"
                 strokeWidth={2}
                 isAnimationActive={false}
               />

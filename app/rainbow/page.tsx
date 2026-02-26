@@ -16,7 +16,7 @@ export default function RainbowPage() {
             financiero.
           </p>
         </header>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
           <RainbowChart />
         </div>
         <section className="rounded-2xl bordeer bg-white p-4 shadow-sm space-y-2">
