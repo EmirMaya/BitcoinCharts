@@ -1,27 +1,134 @@
 @import "tailwindcss";
 
+/* ===============================
+   🌞 LIGHT MODE
+=================================*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Backgrounds */
+  --background: #f7f8fa;
+  --background-secondary: #eef1f4;
+  --background-card: #ffffff;
+
+  /* Text */
+  --foreground: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Borders */
+  --border-color: #e2e6ea;
+
+  /* 🟡 BitAtlas Gold */
+  --btc-gold: #f7931a;
+  --btc-gold-soft: #ffb347;
+  --btc-gold-light: #ffd27a;
+  --btc-gold-dark: #c96b00;
+
+  /* Rainbow zones (soft financial colors) */
+  --zone-dead: #64748b;
+  --zone-sell: #3b82f6;
+  --zone-buy: #06b6d4;
+  --zone-accumulate: #22c55e;
+  --zone-discount: #eab308;
+  --zone-hodl: #f97316;
+  --zone-bubble: #ef4444;
 }
 
+/* ===============================
+   🌙 DARK MODE (BitAtlas Default)
+=================================*/
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Backgrounds */
+    --background: #0b0b0f;
+    --background-secondary: #111217;
+    --background-card: #16181d;
+
+    /* Text */
+    --foreground: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+
+    /* Borders */
+    --border-color: #262a33;
+
+    /* Gold tuned for dark UI */
+    --btc-gold: #f7931a;
+    --btc-gold-soft: #ffb347;
+    --btc-gold-light: #ffd27a;
+    --btc-gold-dark: #b86a00;
+
+    /* Rainbow optimized for dark charts */
+    --zone-dead: #64748b;
+    --zone-sell: #3b82f6;
+    --zone-buy: #00c2ff;
+    --zone-accumulate: #2ecc71;
+    --zone-discount: #ffd166;
+    --zone-hodl: #ff8c42;
+    --zone-bubble: #ff4d4f;
+  }
+}
+
+/* ===============================
+   Tailwind Theme Mapping
+=================================*/
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-card: var(--background-card);
+
   --color-foreground: var(--foreground);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-border: var(--border-color);
+
+  /* Brand */
+  --color-btc: var(--btc-gold);
+  --color-btc-soft: var(--btc-gold-soft);
+
+  /* Zones */
+  --color-zone-dead: var(--zone-dead);
+  --color-zone-sell: var(--zone-sell);
+  --color-zone-buy: var(--zone-buy);
+  --color-zone-accumulate: var(--zone-accumulate);
+  --color-zone-discount: var(--zone-discount);
+  --color-zone-hodl: var(--zone-hodl);
+  --color-zone-bubble: var(--zone-bubble);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    
-  }
-}
-
+/* ===============================
+   Base Styles
+=================================*/
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ===============================
+   BitAtlas Effects
+=================================*/
+
+/* Gold glow hover */
+.gold-glow:hover {
+  box-shadow: 0 0 14px rgba(247, 147, 26, 0.35);
+  transition: 0.25s ease;
+}
+
+/* Card style */
+.card {
+  background: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+/* Smooth transitions */
+* {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
