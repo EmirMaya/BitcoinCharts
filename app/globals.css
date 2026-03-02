@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ===============================
    🌞 LIGHT MODE
@@ -36,36 +37,34 @@
 /* ===============================
    🌙 DARK MODE (BitAtlas Default)
 =================================*/
-@media (prefers-color-scheme: light) {
-  :root {
-    /* Backgrounds */
-    --background: #0b0b0f;
-    --background-secondary: #111217;
-    --background-card: #16181d;
+.dark {
+  /* Backgrounds */
+  --background: #0b0b0f;
+  --background-secondary: #111217;
+  --background-card: #16181d;
 
-    /* Text */
-    --foreground: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
+  /* Text */
+  --foreground: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
 
-    /* Borders */
-    --border-color: #262a33;
+  /* Borders */
+  --border-color: #262a33;
 
-    /* Gold tuned for dark UI */
-    --btc-gold: #f7931a;
-    --btc-gold-soft: #ffb347;
-    --btc-gold-light: #ffd27a;
-    --btc-gold-dark: #b86a00;
+  /* Gold tuned for dark UI */
+  --btc-gold: #f7931a;
+  --btc-gold-soft: #ffb347;
+  --btc-gold-light: #ffd27a;
+  --btc-gold-dark: #b86a00;
 
-    /* Rainbow optimized for dark charts */
-    --zone-dead: #64748b;
-    --zone-sell: #3b82f6;
-    --zone-buy: #00c2ff;
-    --zone-accumulate: #2ecc71;
-    --zone-discount: #ffd166;
-    --zone-hodl: #ff8c42;
-    --zone-bubble: #ff4d4f;
-  }
+  /* Rainbow optimized for dark charts */
+  --zone-dead: #64748b;
+  --zone-sell: #3b82f6;
+  --zone-buy: #00c2ff;
+  --zone-accumulate: #2ecc71;
+  --zone-discount: #ffd166;
+  --zone-hodl: #ff8c42;
+  --zone-bubble: #ff4d4f;
 }
 
 /* ===============================

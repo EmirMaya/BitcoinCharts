@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
+import { FiMoon, FiSun } from "react-icons/fi";
 
 const NAV_ITEMS = [
   { href: "/", label: "Inicio" },
@@ -8,6 +10,30 @@ const NAV_ITEMS = [
 ] as const;
 
 export default function Navbar() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const storedTheme = localStorage.getItem("theme");
+    const systemPrefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+    const initialTheme =
+      storedTheme === "light" || storedTheme === "dark"
+        ? storedTheme
+        : systemPrefersDark
+          ? "dark"
+          : "light";
+
+    root.classList.toggle("dark", initialTheme === "dark");
+  }, []);
+
+  const toggleTheme = () => {
+    const isDark = document.documentElement.classList.contains("dark");
+    const nextTheme = isDark ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", !isDark);
+    localStorage.setItem("theme", nextTheme);
+  };
+
   return (
     <header
       aria-label="Barra de navegacion principal"
@@ -37,31 +63,28 @@ export default function Navbar() {
           />
         </Link>
 
-        <nav aria-label="Navegacion principal">
-          <ul className="flex items-center gap-6 text-sm font-medium">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href}>{item.label}</Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="flex items-center gap-6">
+          <nav aria-label="Navegacion principal">
+            <ul className="flex items-center gap-6 text-sm font-medium">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Cambiar modo claro/oscuro"
+            className="rounded-md p-2 text-foreground hover:bg-background cursor-pointer"
+          >
+            <FiMoon size={20} className="block dark:hidden" />
+            <FiSun size={20} className="hidden dark:block" />
+          </button>
+        </div>
       </div>
-      <style jsx>{`
-        .logo-dark {
-          display: none;
-        }
-
-        @media (prefers-color-scheme: dark) {
-          .logo-light {
-            display: none;
-          }
-
-          .logo-dark {
-            display: block;
-          }
-        }
-      `}</style>
     </header>
   );
 }
