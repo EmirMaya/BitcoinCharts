@@ -96,16 +96,7 @@ const HALVING_DATES = [
   "2020-05-11",
   "2024-04-20",
 ] as const;
-const HALVING_LINE_COLOR = "#374151";
 const HALVING_LINE_DASH = "6 6";
-const HALVING_LABEL = {
-  value: "Halving",
-  position: "insideBottom" as const,
-  fill: "#6b7280",
-  fontSize: 10,
-  offset: 8,
-};
-const GUIDE_LINE_COLOR = "#d1d5db";
 const GUIDE_LINE_DASH = "3 6";
 
 type LegendPayloadEntry = {
@@ -358,7 +349,7 @@ export default function RainbowChart() {
         style={{
           color: entry.color,
           borderColor: entry.color,
-          backgroundColor: "rgba(255,255,255,0.55)",
+          backgroundColor: "var(--legend-chip-bg)",
         }}
       >
         {entry.value}
@@ -405,23 +396,28 @@ export default function RainbowChart() {
       <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
-      <div className="h-160 w-full">
+      <div className="h-160 w-full bg-[var(--chart-plot-bg)]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={allRows}
             margin={{ top: 10, right: 20, bottom: 72, left: 0 }}
+            style={{ backgroundColor: "var(--chart-plot-bg)" }}
           >
             <XAxis
               dataKey="ts"
               type="number"
               scale="time"
               domain={["dataMin", "dataMax"]}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis-text)" }}
+              axisLine={{ stroke: "var(--chart-axis-line)" }}
+              tickLine={{ stroke: "var(--chart-axis-line)" }}
               minTickGap={40}
               tickFormatter={(value) => toDateLabel(Number(value))}
             />
             <YAxis
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis-text)" }}
+              axisLine={{ stroke: "var(--chart-axis-line)" }}
+              tickLine={{ stroke: "var(--chart-axis-line)" }}
               width={70}
               scale={yScale}
               domain={[0, "dataMax"]}
@@ -430,17 +426,37 @@ export default function RainbowChart() {
               allowDataOverflow
             />
             <Tooltip
+              contentStyle={{
+                backgroundColor: "var(--tooltip-bg)",
+                borderColor: "var(--border-color)",
+                borderRadius: "8px",
+                fontSize: "11px",
+              }}
+              labelStyle={{ color: "#e2e8f0", fontSize: "11px" }}
+              itemStyle={{ fontSize: "11px" }}
               labelFormatter={(label) => toDateLabel(Number(label))}
-              formatter={(value) => {
+              formatter={(value, name, item) => {
+                let formatted: string;
                 if (Array.isArray(value) && value.length === 2) {
                   const low = Number(value[0]);
                   const high = Number(value[1]);
-                  return `${usdFormatter.format(low)} ~ ${usdFormatter.format(high)}`;
+                  formatted = `${usdFormatter.format(low)} ~ ${usdFormatter.format(high)}`;
+                } else if (typeof value === "number" && Number.isFinite(value)) {
+                  formatted = usdFormatter.format(value);
+                } else {
+                  formatted = String(value);
                 }
-                if (typeof value === "number" && Number.isFinite(value)) {
-                  return usdFormatter.format(value);
+
+                if (String(item?.dataKey ?? "") === "price") {
+                  return [
+                    <span key="price-tooltip-value" style={{ color: "#cbd5e1" }}>
+                      {formatted}
+                    </span>,
+                    name,
+                  ];
                 }
-                return String(value);
+
+                return formatted;
               }}
               itemSorter={(item) => {
                 const key = String(item?.dataKey ?? "");
@@ -458,7 +474,7 @@ export default function RainbowChart() {
               <ReferenceLine
                 key={`guide-y-${value}`}
                 y={value}
-                stroke={GUIDE_LINE_COLOR}
+                stroke="var(--chart-guide-line)"
                 strokeWidth={1}
                 strokeOpacity={0.9}
                 strokeDasharray={GUIDE_LINE_DASH}
@@ -470,11 +486,17 @@ export default function RainbowChart() {
               <ReferenceLine
                 key={`halving-${date}`}
                 x={date}
-                stroke={HALVING_LINE_COLOR}
+                stroke="var(--chart-halving-line)"
                 strokeWidth={2}
                 strokeOpacity={1}
                 strokeDasharray={HALVING_LINE_DASH}
-                label={HALVING_LABEL}
+                label={{
+                  value: "Halving",
+                  position: "insideBottom",
+                  fill: "var(--chart-halving-label)",
+                  fontSize: 10,
+                  offset: 8,
+                }}
                 ifOverflow="extendDomain"
               />
             ))}
@@ -500,7 +522,7 @@ export default function RainbowChart() {
               <ReferenceLine
                 key={`guide-x-${date}`}
                 x={date}
-                stroke={GUIDE_LINE_COLOR}
+                stroke="var(--chart-guide-line)"
                 strokeWidth={1}
                 strokeOpacity={1}
                 strokeDasharray={GUIDE_LINE_DASH}
@@ -513,9 +535,9 @@ export default function RainbowChart() {
               <Line
                 type="monotone"
                 dataKey="price"
-                name="precio"
+                name="Precio"
                 dot={false}
-                stroke="#1f2937"
+                stroke="var(--price-line-color)"
                 strokeWidth={2}
                 isAnimationActive={false}
               />

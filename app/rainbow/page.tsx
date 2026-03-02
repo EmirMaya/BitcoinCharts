@@ -1,4 +1,3 @@
-import Navbar from "../components/Navbar";
 import RainbowChart from "./rainbow-chart";
 
 export const metadata = {
@@ -13,15 +12,15 @@ export default function RainbowPage() {
         <div className="mx-auto max-w-7xl space-y-6">
           <header className="space-y-2">
             <h1 className="text-3xl font-bold">Bitcoin Rainbow Chart</h1>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-text-secondary">
               Gráfico informativo basado en datos públicos. No es consejo
               financiero.
             </p>
           </header>
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <div className="rounded-2xl bg-card p-4 shadow-sm border border-border">
             <RainbowChart />
           </div>
-          <section className="rounded-2xl bordeer bg-white p-4 shadow-sm space-y-2">
+          <section className="rounded-2xl bordeer bg-card p-4 shadow-sm space-y-2 border border-border">
             <h2 className="text-xl font-semibold">Como leerlo</h2>
             <p className="">
               La idea del “rainbow” es mostrar bandas de valoración histórica

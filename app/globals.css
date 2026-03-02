@@ -17,6 +17,15 @@
 
   /* Borders */
   --border-color: #e2e6ea;
+  --tooltip-bg: #334155;
+  --price-line-color: #000000;
+  --chart-axis-text: #475569;
+  --chart-axis-line: #94a3b8;
+  --chart-guide-line: #d1d5db;
+  --chart-halving-line: #374151;
+  --chart-halving-label: #6b7280;
+  --chart-plot-bg: #ffffff;
+  --legend-chip-bg: rgba(255, 255, 255, 0.55);
 
   /* 🟡 BitAtlas Gold */
   --btc-gold: #f7931a;
@@ -50,6 +59,15 @@
 
   /* Borders */
   --border-color: #262a33;
+  --tooltip-bg: #020617;
+  --price-line-color: #e2e8f0;
+  --chart-axis-text: #cbd5e1;
+  --chart-axis-line: #94a3b8;
+  --chart-guide-line: #94a3b8;
+  --chart-halving-line: #e2e8f0;
+  --chart-halving-label: #e2e8f0;
+  --chart-plot-bg: #16181d;
+  --legend-chip-bg: rgba(15, 23, 42, 0.72);
 
   /* Gold tuned for dark UI */
   --btc-gold: #f7931a;
