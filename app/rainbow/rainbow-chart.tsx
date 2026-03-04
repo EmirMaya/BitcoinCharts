@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -343,17 +343,25 @@ export default function RainbowChart() {
       .filter((v): v is LegendPayloadEntry => Boolean(v));
 
     const renderChip = (entry: LegendPayloadEntry) => (
-      <span
-        key={String(entry.dataKey ?? entry.value)}
-        className="rounded-md border px-3 py-1 text-[13px] leading-tight"
-        style={{
-          color: entry.color,
+      (() => {
+        const chipStyle: CSSProperties & {
+          "--legend-chip-item-color": string;
+        } = {
           borderColor: entry.color,
           backgroundColor: "var(--legend-chip-bg)",
-        }}
+          "--legend-chip-item-color": entry.color ?? "var(--foreground)",
+        };
+
+        return (
+      <span
+        key={String(entry.dataKey ?? entry.value)}
+        className="rounded-md border px-3 py-1 text-[13px] leading-tight text-[color:var(--legend-chip-text)] dark:text-[color:var(--legend-chip-item-color)]"
+        style={chipStyle}
       >
         {entry.value}
       </span>
+        );
+      })()
     );
 
     return (

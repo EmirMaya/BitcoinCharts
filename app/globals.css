@@ -26,6 +26,7 @@
   --chart-halving-label: #6b7280;
   --chart-plot-bg: #ffffff;
   --legend-chip-bg: rgba(255, 255, 255, 0.55);
+  --legend-chip-text: #1f2937;
 
   /* 🟡 BitAtlas Gold */
   --btc-gold: #f7931a;
@@ -68,6 +69,7 @@
   --chart-halving-label: #e2e8f0;
   --chart-plot-bg: #16181d;
   --legend-chip-bg: rgba(15, 23, 42, 0.72);
+  --legend-chip-text: #e2e8f0;
 
   /* Gold tuned for dark UI */
   --btc-gold: #f7931a;
