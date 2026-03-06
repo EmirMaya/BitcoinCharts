@@ -404,7 +404,7 @@ export default function RainbowChart() {
       <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
-      <div className="h-160 w-full bg-[var(--chart-plot-bg)]">
+      <div className="h-160 w-full bg-(--chart-plot-bg)">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={allRows}
