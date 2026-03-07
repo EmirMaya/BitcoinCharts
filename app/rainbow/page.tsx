@@ -13,7 +13,7 @@ export default function RainbowPage() {
           <header className="space-y-2">
             <h1 className="text-3xl font-bold">Bitcoin Rainbow Chart</h1>
             <p className="text-sm text-text-secondary">
-              Gráfico informativo basado en datos públicos. No es consejo
+              Gráfico Arcoiris del precio histórioco de Bitcoin. Gráfico informativo basado en datos públicos. No es consejo
               financiero.
             </p>
           </header>
