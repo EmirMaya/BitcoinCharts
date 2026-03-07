@@ -308,11 +308,11 @@ export default function RainbowChart() {
     return ticks;
   }, [allRows]);
   const yTickFormatter = (v: number) => {
-    if (v === 0) return "0";
+    if (v === 0) return "$0";
     const exp = Math.log10(v);
     const isMajor = Math.abs(exp - Math.round(exp)) < 1e-10 && v >= 10;
     if (!isMajor) return "";
-    return Intl.NumberFormat("en-US").format(v);
+    return `$${Intl.NumberFormat("en-US").format(v)}`;
   };
   const usdFormatter = useMemo(
     () =>
@@ -355,7 +355,7 @@ export default function RainbowChart() {
         return (
       <span
         key={String(entry.dataKey ?? entry.value)}
-        className="rounded-md border px-3 py-1 text-[13px] leading-tight text-[color:var(--legend-chip-text)] dark:text-[color:var(--legend-chip-item-color)]"
+        className="rounded-md border-[2px] px-3 py-1 text-[13px] leading-tight text-[color:var(--legend-chip-text)] dark:text-[color:var(--legend-chip-item-color)]"
         style={chipStyle}
       >
         {entry.value}
@@ -426,7 +426,7 @@ export default function RainbowChart() {
               tick={{ fontSize: 12, fill: "var(--chart-axis-text)" }}
               axisLine={{ stroke: "var(--chart-axis-line)" }}
               tickLine={{ stroke: "var(--chart-axis-line)" }}
-              width={70}
+              width={86}
               scale={yScale}
               domain={[0, "dataMax"]}
               ticks={yTicks}
@@ -554,8 +554,8 @@ export default function RainbowChart() {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-xs text-neutral-500">
-        Informativo: no es consejo financiero. Paso 5.3: zonas entre límites en escala log.
+      <p className="text-xs text-neutral-700 dark:text-neutral-300">
+        Gráfico totalmente con fines recreativos e informativos: no es consejo financiero.
       </p>
     </div>
   );
