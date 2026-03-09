@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CryptoMarketTable from "./components/CryptoMarketTable";
 
 const featureCards = [
   {
@@ -157,6 +158,10 @@ export default function Home() {
             </div>
           </aside>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+        <CryptoMarketTable />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
