@@ -54,7 +54,7 @@ export default function Home() {
 
         <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-24">
           <div className="space-y-8">
-            <div className="inline-flex items-center rounded-full border border-[color:var(--btc-gold-soft)] bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-btc backdrop-blur">
+            <div className="inline-flex items-center rounded-full border border-btc-soft bg-card px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-btc backdrop-blur">
               BitAtlas · Bitcoin Intelligence
             </div>
 
@@ -109,7 +109,7 @@ export default function Home() {
                     Radar de Bitcoin
                   </h2>
                 </div>
-                <div className="rounded-full border border-[color:var(--btc-gold-soft)] px-3 py-1 text-xs font-medium text-btc">
+                <div className="rounded-full border border-btc-soft px-3 py-1 text-xs font-medium text-btc">
                   BTC First
                 </div>
               </div>
@@ -179,7 +179,7 @@ export default function Home() {
           {featureCards.map((card) => (
             <article
               key={card.title}
-              className="group rounded-[24px] border border-border bg-card p-6 shadow-sm"
+              className="group rounded-3xl border border-border bg-card p-6 shadow-sm"
             >
               <div className="flex h-full flex-col justify-between gap-8">
                 <div className="space-y-4">
@@ -249,7 +249,7 @@ export default function Home() {
 
             <Link
               href="/rainbow"
-              className="gold-glow inline-flex items-center justify-center rounded-full border border-[color:var(--btc-gold-soft)] bg-btc px-6 py-3 text-sm font-semibold text-black"
+              className="gold-glow inline-flex items-center justify-center rounded-full border border-btc-soft bg-btc px-6 py-3 text-sm font-semibold text-black"
             >
               Empezar por BTC
             </Link>
