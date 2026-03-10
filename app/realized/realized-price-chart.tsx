@@ -34,35 +34,18 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-function buildLinePath(values: number[], width: number, height: number) {
-  if (values.length === 0) {
-    return "";
-  }
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-
-  return values
-    .map((value, index) => {
-      const x = (index / Math.max(values.length - 1, 1)) * width;
-      const y = height - ((value - min) / range) * height;
-
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
-}
-
-function buildLogLinePath(values: number[], width: number, height: number) {
+function buildLogLinePath(
+  values: number[],
+  width: number,
+  height: number,
+  minLog: number,
+  maxLog: number,
+) {
   if (values.length === 0) {
     return "";
   }
 
   const safeValues = values.map((value) => Math.max(value, 0.0001));
-  const min = Math.min(...safeValues);
-  const max = Math.max(...safeValues);
-  const minLog = Math.log10(min);
-  const maxLog = Math.log10(max);
   const range = maxLog - minLog || 1;
 
   return safeValues
@@ -145,8 +128,20 @@ export function RealizedPriceChart() {
       return { value, y };
     });
     const yearTicks = points.filter((point) => point.date.endsWith("-01-01"));
-    const realizedPath = buildLogLinePath(realizedValues, width, height);
-    const btcPricePath = buildLogLinePath(btcValues, width, height);
+    const realizedPath = buildLogLinePath(
+      realizedValues,
+      width,
+      height,
+      minLog,
+      maxLog,
+    );
+    const btcPricePath = buildLogLinePath(
+      btcValues,
+      width,
+      height,
+      minLog,
+      maxLog,
+    );
     const areaPath = buildAreaPath(realizedPath, width, height);
 
     return {
@@ -327,7 +322,7 @@ export function RealizedPriceChart() {
                   d={chart.btcPricePath}
                   fill="none"
                   stroke="var(--price-line-color)"
-                  strokeWidth="2.5"
+                  strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -335,7 +330,7 @@ export function RealizedPriceChart() {
                   d={chart.realizedPath}
                   fill="none"
                   stroke="#f7931a"
-                  strokeWidth="3.5"
+                  strokeWidth="2.75"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
