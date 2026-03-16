@@ -19,11 +19,13 @@ const CHART_ITEMS = [
     href: "/rainbow",
     label: "Rainbow Chart",
     description: "Lectura histórica por bandas de valoración.",
+    badge: "Histórico",
   },
   {
     href: "/realized",
     label: "Precio realizado",
     description: "Compara spot vs. costo base on-chain.",
+    badge: "On-chain",
   },
 ] as const;
 
@@ -95,7 +97,7 @@ export default function Navbar() {
       aria-label="Barra de navegacion principal"
       className="sticky top-0 z-40 border-b border-border/80 bg-background-secondary/90 backdrop-blur"
     >
-      <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-4 w-full max-w-7xl items-center justify-between gap-4 px-4  sm:px-6 lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-3"
@@ -106,28 +108,28 @@ export default function Navbar() {
             className="block dark:hidden"
             src="/logo/BitAtlas_logo_gray_atlas.png"
             alt="BitAtlas"
-            width={180}
-            height={50}
+            width={150}
+            height={30}
             priority
           />
           <Image
             className="hidden dark:block"
             src="/logo/BitAtlas_logo_gold_transparent.png"
             alt="BitAtlas"
-            width={180}
-            height={50}
+            width={150}
+            height={30}
             priority
           />
         </Link>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <nav aria-label="Navegacion principal">
-            <ul className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+            <ul className="flex items-center gap-1.5 text-sm font-medium text-text-secondary">
               <li>
                 <Link
                   href="/"
                   onClick={closeMenus}
-                  className={`inline-flex items-center rounded-full px-4 py-2 transition ${
+                  className={`inline-flex items-center rounded-full px-4 py-1.5 transition ${
                     pathname === "/"
                       ? "bg-card text-foreground shadow-sm"
                       : "hover:bg-card hover:text-foreground"
@@ -144,7 +146,7 @@ export default function Navbar() {
                     event.stopPropagation();
                     setIsChartsOpen((open) => !open);
                   }}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 transition ${
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 transition ${
                     pathname.startsWith("/rainbow") || pathname.startsWith("/realized")
                       ? "bg-card text-foreground shadow-sm"
                       : "hover:bg-card hover:text-foreground"
@@ -153,13 +155,13 @@ export default function Navbar() {
                   Gráficos
                   <FiChevronDown
                     className={`transition ${isChartsOpen ? "rotate-180" : ""}`}
-                    size={16}
+                    size={15}
                   />
                 </button>
 
                 {isChartsOpen ? (
                   <div
-                    className="absolute right-0 top-[calc(100%+0.75rem)] w-80 overflow-hidden rounded-3xl border border-border bg-card p-2 shadow-xl"
+                    className="absolute right-0 top-[calc(100%+0.6rem)] w-80 overflow-hidden rounded-3xl border border-border bg-card p-2 shadow-xl"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div className="rounded-2xl bg-[radial-gradient(circle_at_top_left,rgba(247,147,26,0.16),transparent_42%)] p-3">
@@ -184,9 +186,14 @@ export default function Navbar() {
                         >
                           <div className="flex items-center justify-between gap-4">
                             <div>
-                              <p className="text-sm font-semibold text-foreground">
-                                {item.label}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-foreground">
+                                  {item.label}
+                                </p>
+                                <span className="rounded-full border border-btc-soft bg-btc/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-btc">
+                                  {item.badge}
+                                </span>
+                              </div>
                               <p className="mt-1 text-xs leading-5 text-text-secondary">
                                 {item.description}
                               </p>
@@ -204,7 +211,7 @@ export default function Navbar() {
                   <Link
                     href={item.href}
                     onClick={closeMenus}
-                    className="inline-flex items-center rounded-full px-4 py-2 transition hover:bg-card hover:text-foreground"
+                    className="inline-flex items-center rounded-full px-4 py-1.5 transition hover:bg-card hover:text-foreground"
                   >
                     {item.label}
                   </Link>
@@ -216,9 +223,9 @@ export default function Navbar() {
           <Link
             href="/realized"
             onClick={closeMenus}
-            className="inline-flex items-center gap-2 rounded-full border border-btc-soft bg-card px-4 py-2 text-sm font-semibold text-foreground transition hover:border-btc hover:text-btc"
+            className="inline-flex items-center gap-2 rounded-full border border-btc-soft bg-card px-4 py-1.5 text-sm font-semibold text-foreground transition hover:border-btc hover:text-btc"
           >
-            <FiGrid size={16} />
+            <FiGrid size={15} />
             On-Chain
           </Link>
 
@@ -226,10 +233,10 @@ export default function Navbar() {
             type="button"
             onClick={toggleTheme}
             aria-label="Cambiar modo claro/oscuro"
-            className="cursor-pointer rounded-full border border-border bg-card p-2.5 text-foreground transition hover:bg-background"
+            className="cursor-pointer rounded-full border border-border bg-card p-2 text-foreground transition hover:bg-background"
           >
-            <FiMoon size={18} className="block dark:hidden" />
-            <FiSun size={18} className="hidden dark:block" />
+            <FiMoon size={17} className="block dark:hidden" />
+            <FiSun size={17} className="hidden dark:block" />
           </button>
         </div>
 
@@ -238,19 +245,19 @@ export default function Navbar() {
             type="button"
             onClick={toggleTheme}
             aria-label="Cambiar modo claro/oscuro"
-            className="cursor-pointer rounded-full border border-border bg-card p-2.5 text-foreground transition hover:bg-background"
+            className="cursor-pointer rounded-full border border-border bg-card p-2 text-foreground transition hover:bg-background"
           >
-            <FiMoon size={18} className="block dark:hidden" />
-            <FiSun size={18} className="hidden dark:block" />
+            <FiMoon size={17} className="block dark:hidden" />
+            <FiSun size={17} className="hidden dark:block" />
           </button>
           <button
             type="button"
             onClick={() => setIsMobileOpen((open) => !open)}
             aria-label="Abrir menu de navegacion"
             aria-expanded={isMobileOpen}
-            className="cursor-pointer rounded-full border border-border bg-card p-2.5 text-foreground transition hover:bg-background"
+            className="cursor-pointer rounded-full border border-border bg-card p-2 text-foreground transition hover:bg-background"
           >
-            {isMobileOpen ? <FiX size={18} /> : <FiMenu size={18} />}
+            {isMobileOpen ? <FiX size={17} /> : <FiMenu size={17} />}
           </button>
         </div>
       </div>
@@ -277,7 +284,12 @@ export default function Navbar() {
                     onClick={closeMenus}
                     className="block rounded-2xl bg-background px-4 py-3"
                   >
-                    <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                      <span className="rounded-full border border-btc-soft bg-btc/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-btc">
+                        {item.badge}
+                      </span>
+                    </div>
                     <p className="mt-1 text-xs leading-5 text-text-secondary">
                       {item.description}
                     </p>
