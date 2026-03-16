@@ -5,30 +5,51 @@ const featureCards = [
   {
     title: "Rainbow Chart",
     description:
-      "Visualizá el precio de Bitcoin dentro de su contexto histórico y detectá zonas de acumulación, euforia y riesgo.",
+      "Visualiza el precio de Bitcoin dentro de su contexto histórico y detecta zonas de acumulación, euforia y riesgo.",
     href: "/rainbow",
     cta: "Ver gráfico",
   },
   {
-    title: "Lectura de ciclo",
+    title: "Precio realizado",
     description:
-      "Entendé en qué etapa del mercado está BTC combinando momentum, narrativa, estructura y perspectiva de largo plazo.",
-    href: "/rainbow",
-    cta: "Explorar ciclos",
+      "Sigue el costo base on-chain del mercado y compara el spot frente al promedio realizado de las monedas en circulación.",
+    href: "/realized",
+    cta: "Abrir métrica",
   },
   {
-    title: "Mapa de convicción",
+    title: "Lectura de mercado",
     description:
-      "Una home pensada para separar ruido de señal y ayudarte a leer Bitcoin con más claridad que urgencia.",
-    href: "/rainbow",
-    cta: "Ir al panel",
+      "Usa ambos gráficos como panel visual para leer valoración, estructura y contexto sin depender del ruido diario.",
+    href: "/#graficos",
+    cta: "Ir al hub",
   },
 ] as const;
 
 const focusBlocks = [
   "Tesis y contexto macro para Bitcoin",
   "Indicadores visuales simples para leer el ciclo",
-  "Recursos educativos para usuarios nuevos y avanzados",
+  "Herramientas on-chain para sumar profundidad a la lectura",
+] as const;
+
+const chartHighlights = [
+  {
+    eyebrow: "Valoración histórica",
+    title: "Rainbow Chart",
+    description:
+      "Ideal para ubicar a BTC dentro de bandas de mercado y detectar extremos visuales de sobrevaloración o apatía.",
+    href: "/rainbow",
+    cta: "Ir al Rainbow Chart",
+    accent: "from-[rgba(247,147,26,0.24)] to-transparent",
+  },
+  {
+    eyebrow: "Costo base on-chain",
+    title: "Precio realizado",
+    description:
+      "Compara el precio spot con el realized price para ver cuándo el mercado cotiza cerca o lejos del costo agregado de los holders.",
+    href: "/realized",
+    cta: "Ver precio realizado",
+    accent: "from-[rgba(59,130,246,0.2)] to-transparent",
+  },
 ] as const;
 
 const principles = [
@@ -65,7 +86,7 @@ export default function Home() {
               </h1>
               <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
                 Un inicio editorial para seguir ciclos, zonas de valoración y
-                narrativa de mercado con una experiencia limpia en modo claro y
+                métricas on-chain con una experiencia limpia en modo claro y
                 oscuro.
               </p>
             </div>
@@ -78,10 +99,10 @@ export default function Home() {
                 Abrir Rainbow Chart
               </Link>
               <Link
-                href="/rainbow"
+                href="/realized"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground"
               >
-                Ver análisis visual
+                Ver precio realizado
               </Link>
             </div>
 
@@ -131,14 +152,14 @@ export default function Home() {
 
                 <div className="rounded-2xl border border-border bg-background p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                    Señal
+                    On-chain
                   </p>
                   <p className="mt-3 text-lg font-semibold">
-                    Zonas antes que titulares
+                    Spot vs. costo base
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Estructura simple para leer precio, valoración y contexto en
-                    una misma vista.
+                    El precio realizado suma una segunda capa para entender si el
+                    mercado cotiza cerca o lejos del costo agregado.
                   </p>
                 </div>
 
@@ -147,11 +168,11 @@ export default function Home() {
                     Próximo paso
                   </p>
                   <p className="mt-3 text-lg font-semibold">
-                    Entrá al gráfico principal
+                    Entrá al hub de gráficos
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    El `Rainbow Chart` es el punto de entrada ideal para una
-                    lectura rápida y visual del histórico de BTC.
+                    Usa el Rainbow Chart y el precio realizado como panel
+                    complementario para una lectura más completa de BTC.
                   </p>
                 </div>
               </div>
@@ -160,26 +181,60 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+      <section id="mercados" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
         <CryptoMarketTable />
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+      <section id="graficos" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
-              Explorar
+              Gráficos
             </p>
             <h2 className="text-3xl font-semibold tracking-tight">
-              Módulos clave del inicio
+              Dos vistas para leer Bitcoin con más profundidad
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-text-secondary">
-            La home puede crecer como hub principal de información cripto, pero
-            con una orientación clara: Bitcoin como eje de lectura.
+            El Rainbow Chart te da una lectura histórica rápida. El precio
+            realizado añade una capa on-chain para comparar valoración y costo
+            base del mercado en una sola navegación.
           </p>
         </div>
 
+        <div className="grid gap-5 lg:grid-cols-2">
+          {chartHighlights.map((chart) => (
+            <article
+              key={chart.title}
+              className="group overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
+            >
+              <div className={`h-28 bg-gradient-to-br ${chart.accent}`} />
+              <div className="space-y-5 p-6">
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
+                    {chart.eyebrow}
+                  </p>
+                  <h3 className="text-2xl font-semibold tracking-tight">
+                    {chart.title}
+                  </h3>
+                  <p className="text-sm leading-7 text-text-secondary">
+                    {chart.description}
+                  </p>
+                </div>
+
+                <Link
+                  href={chart.href}
+                  className="inline-flex items-center text-sm font-semibold text-btc"
+                >
+                  {chart.cta}
+                </Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:pb-20">
         <div className="grid gap-5 lg:grid-cols-3">
           {featureCards.map((card) => (
             <article
@@ -209,7 +264,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-background-secondary">
+      <section id="enfoque" className="border-y border-border bg-background-secondary">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-14 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div className="space-y-4">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
@@ -244,20 +299,28 @@ export default function Home() {
                 Inicio BitAtlas
               </p>
               <h2 className="text-3xl font-semibold tracking-tight">
-                Base lista para sumar métricas, noticias o módulos on-chain.
+                Base lista para sumar métricas, paneles y nuevas lecturas de BTC.
               </h2>
               <p className="text-sm leading-7 text-text-secondary">
-                La estructura ya deja resuelto el tono visual de la home y
-                soporta tema claro/oscuro usando tus variables globales.
+                La home ahora conecta las dos vistas principales del proyecto y
+                deja preparada la navegación para seguir ampliando BitAtlas.
               </p>
             </div>
 
-            <Link
-              href="/rainbow"
-              className="gold-glow inline-flex items-center justify-center rounded-full border border-btc-soft bg-btc px-6 py-3 text-sm font-semibold text-black"
-            >
-              Empezar por BTC
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/rainbow"
+                className="gold-glow inline-flex items-center justify-center rounded-full border border-btc-soft bg-btc px-6 py-3 text-sm font-semibold text-black"
+              >
+                Abrir Rainbow Chart
+              </Link>
+              <Link
+                href="/realized"
+                className="inline-flex items-center justify-center rounded-full border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground"
+              >
+                Abrir precio realizado
+              </Link>
+            </div>
           </div>
         </div>
       </section>

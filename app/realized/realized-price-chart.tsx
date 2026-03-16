@@ -15,6 +15,12 @@ type RealizedPriceResponse = {
   error?: string;
 };
 
+type PositionedPoint = RealizedPricePoint & {
+  x: number;
+  realizedY: number;
+  btcY: number;
+};
+
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -69,6 +75,7 @@ function buildAreaPath(path: string, width: number, height: number) {
 export function RealizedPriceChart() {
   const [data, setData] = useState<RealizedPriceResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -143,6 +150,24 @@ export function RealizedPriceChart() {
       maxLog,
     );
     const areaPath = buildAreaPath(realizedPath, width, height);
+    const positionedPoints: PositionedPoint[] = points.map((point, index) => {
+      const x = (index / Math.max(points.length - 1, 1)) * width;
+      const realizedY =
+        height -
+        ((Math.log10(Math.max(point.realizedPrice, 0.0001)) - minLog) / range) *
+          height;
+      const btcY =
+        height -
+        ((Math.log10(Math.max(point.btcPrice, 0.0001)) - minLog) / range) *
+          height;
+
+      return {
+        ...point,
+        x,
+        realizedY,
+        btcY,
+      };
+    });
 
     return {
       width,
@@ -154,7 +179,17 @@ export function RealizedPriceChart() {
       realizedPath,
       btcPricePath,
       areaPath,
+      positionedPoints,
     };
+  }, [data]);
+
+  useEffect(() => {
+    if (!data?.points.length) {
+      setActiveIndex(null);
+      return;
+    }
+
+    setActiveIndex(data.points.length - 1);
   }, [data]);
 
   const stats = useMemo(() => {
@@ -194,6 +229,33 @@ export function RealizedPriceChart() {
         Cargando datos del precio realizado...
       </div>
     );
+  }
+
+  const activePoint =
+    activeIndex !== null ? chart.positionedPoints[activeIndex] : null;
+  const tooltipWidth = 176;
+  const tooltipHeight = 74;
+  const tooltipX = activePoint
+    ? Math.min(
+        Math.max(activePoint.x - tooltipWidth / 2, 12),
+        chart.width - tooltipWidth - 12,
+      )
+    : 0;
+  const tooltipY = activePoint
+    ? Math.max(
+        Math.min(activePoint.btcY, activePoint.realizedY) - tooltipHeight - 16,
+        12,
+      )
+    : 0;
+
+  function updateActiveIndex(clientX: number, bounds: DOMRect) {
+    const relativeX = clientX - bounds.left;
+    const ratio = bounds.width === 0 ? 0 : relativeX / bounds.width;
+    const nextIndex = Math.round(
+      Math.min(Math.max(ratio, 0), 1) * Math.max(data.points.length - 1, 0),
+    );
+
+    setActiveIndex(nextIndex);
   }
 
   return (
@@ -288,6 +350,25 @@ export function RealizedPriceChart() {
                 className="h-auto w-full"
                 role="img"
                 aria-label="Gráfico logarítmico de Bitcoin y precio realizado"
+                onMouseLeave={() => setActiveIndex(data.points.length - 1)}
+                onMouseMove={(event) =>
+                  updateActiveIndex(
+                    event.clientX,
+                    event.currentTarget.getBoundingClientRect(),
+                  )
+                }
+                onTouchStart={(event) =>
+                  updateActiveIndex(
+                    event.touches[0].clientX,
+                    event.currentTarget.getBoundingClientRect(),
+                  )
+                }
+                onTouchMove={(event) =>
+                  updateActiveIndex(
+                    event.touches[0].clientX,
+                    event.currentTarget.getBoundingClientRect(),
+                  )
+                }
               >
                 <defs>
                   <linearGradient id="realized-area" x1="0" y1="0" x2="0" y2="1">
@@ -363,6 +444,60 @@ export function RealizedPriceChart() {
                     </g>
                   );
                 })}
+
+                {activePoint ? (
+                  <g pointerEvents="none">
+                    <line
+                      x1={activePoint.x}
+                      x2={activePoint.x}
+                      y1="0"
+                      y2={chart.height}
+                      stroke="rgba(247,147,26,0.45)"
+                      strokeDasharray="5 7"
+                    />
+                    <circle
+                      cx={activePoint.x}
+                      cy={activePoint.btcY}
+                      r="5"
+                      fill="var(--price-line-color)"
+                      stroke="var(--background-card)"
+                      strokeWidth="2"
+                    />
+                    <circle
+                      cx={activePoint.x}
+                      cy={activePoint.realizedY}
+                      r="5.5"
+                      fill="#f7931a"
+                      stroke="var(--background-card)"
+                      strokeWidth="2"
+                    />
+                    <g transform={`translate(${tooltipX}, ${tooltipY})`}>
+                      <rect
+                        width={tooltipWidth}
+                        height={tooltipHeight}
+                        rx="16"
+                        fill="rgba(15, 23, 42, 0.92)"
+                        stroke="rgba(255, 255, 255, 0.08)"
+                      />
+                      <text
+                        x="12"
+                        y="20"
+                        fill="rgba(255,255,255,0.72)"
+                        fontSize="11"
+                      >
+                        {dateFormatter.format(new Date(activePoint.date))}
+                      </text>
+                      <circle cx="16" cy="38" r="4" fill="var(--price-line-color)" />
+                      <text x="26" y="42" fill="#ffffff" fontSize="12">
+                        BTC {compactCurrencyFormatter.format(activePoint.btcPrice)}
+                      </text>
+                      <circle cx="16" cy="57" r="4" fill="#f7931a" />
+                      <text x="26" y="61" fill="#ffffff" fontSize="12">
+                        Realizado {compactCurrencyFormatter.format(activePoint.realizedPrice)}
+                      </text>
+                    </g>
+                  </g>
+                ) : null}
               </svg>
             </div>
           </div>
