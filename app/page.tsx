@@ -85,9 +85,8 @@ export default function Home() {
                 La portada para entender Bitcoin con contexto, no con ansiedad.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
-                Un inicio editorial para seguir ciclos, zonas de valoración y
-                métricas on-chain con una experiencia limpia en modo claro y
-                oscuro.
+                Una plataforma especializada para analizar ciclos de mercado,
+                zonas de valoración y métricas on-chain de Bitcoin.
               </p>
             </div>
 
