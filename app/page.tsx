@@ -285,7 +285,7 @@ export default function Home() {
                   {item.text}
                 </p>
               </div>
-            ))}
+            ))}M
           </div>
         </div>
       </section>
@@ -301,8 +301,8 @@ export default function Home() {
                 Base lista para sumar métricas, paneles y nuevas lecturas de BTC.
               </h2>
               <p className="text-sm leading-7 text-text-secondary">
-                La home ahora conecta las dos vistas principales del proyecto y
-                deja preparada la navegación para seguir ampliando BitAtlas.
+                BitAtlas consolida una propuesta orientada a claridad,
+                consistencia y crecimiento sostenido.
               </p>
             </div>
 
