@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   FiBarChart2,
   FiChevronDown,
-  FiGrid,
+  FiDollarSign,
   FiMenu,
   FiMoon,
   FiSun,
@@ -26,6 +26,12 @@ const CHART_ITEMS = [
     label: "Precio realizado",
     description: "Compara spot vs. costo base on-chain.",
     badge: "On-chain",
+  },
+  {
+    href: "/dca-calculator",
+    label: "Calculadora DCA",
+    description: "Práctica simple para compras periódicas de Bitcoin.",
+    badge: "Práctica",
   },
 ] as const;
 
@@ -147,7 +153,9 @@ export default function Navbar() {
                     setIsChartsOpen((open) => !open);
                   }}
                   className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 transition ${
-                    pathname.startsWith("/rainbow") || pathname.startsWith("/realized")
+                    pathname.startsWith("/rainbow") ||
+                    pathname.startsWith("/realized") ||
+                    pathname.startsWith("/dca-calculator")
                       ? "bg-card text-foreground shadow-sm"
                       : "hover:bg-card hover:text-foreground"
                   }`}
@@ -221,12 +229,12 @@ export default function Navbar() {
           </nav>
 
           <Link
-            href="/realized"
+            href="/dca-calculator"
             onClick={closeMenus}
             className="inline-flex items-center gap-2 rounded-full border border-btc-soft bg-card px-4 py-1.5 text-sm font-semibold text-foreground transition hover:border-btc hover:text-btc"
           >
-            <FiGrid size={15} />
-            On-Chain
+            <FiDollarSign size={15} />
+            DCA
           </Link>
 
           <button

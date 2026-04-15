@@ -23,6 +23,13 @@ const featureCards = [
     href: "/#graficos",
     cta: "Ir al hub",
   },
+  {
+    title: "Calculadora DCA",
+    description:
+      "Practica una estrategia de compras periódicas y entiende cómo se construye el precio promedio al acumular BTC en el tiempo.",
+    href: "/dca-calculator",
+    cta: "Abrir calculadora",
+  },
 ] as const;
 
 const focusBlocks = [

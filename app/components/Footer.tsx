@@ -14,6 +14,9 @@ export default function Footer() {
           <Link href="/rainbow" className="hover:text-foreground">
             Rainbow Chart
           </Link>
+          <Link href="/dca-calculator" className="hover:text-foreground">
+            DCA Calculator
+          </Link>
         </div>
       </div>
     </footer>

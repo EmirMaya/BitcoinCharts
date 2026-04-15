@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import {
-  fetchCryptoMarkets,
-  MARKET_DATA_REVALIDATE_SECONDS,
-} from "@/lib/crypto-markets";
+import { fetchCryptoMarkets } from "@/lib/crypto-markets";
 
-export const revalidate = MARKET_DATA_REVALIDATE_SECONDS;
+export const revalidate = 300;
 
 export async function GET() {
   try {

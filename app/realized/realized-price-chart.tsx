@@ -247,12 +247,13 @@ export function RealizedPriceChart() {
         12,
       )
     : 0;
+  const chartPointCount = chart.positionedPoints.length;
 
   function updateActiveIndex(clientX: number, bounds: DOMRect) {
     const relativeX = clientX - bounds.left;
     const ratio = bounds.width === 0 ? 0 : relativeX / bounds.width;
     const nextIndex = Math.round(
-      Math.min(Math.max(ratio, 0), 1) * Math.max(data.points.length - 1, 0),
+      Math.min(Math.max(ratio, 0), 1) * Math.max(chartPointCount - 1, 0),
     );
 
     setActiveIndex(nextIndex);
