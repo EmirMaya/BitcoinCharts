@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: "BitAtlas",
   description: "Contexto cripto con foco en Bitcoin.",
   icons: {
-    icon: "/logo/BitAtlas_logo_gold_transparent.png",
-    shortcut: "/logo/BitAtlas_logo_gold_transparent.png",
-    apple: "/logo/BitAtlas_logo_gold_transparent.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
