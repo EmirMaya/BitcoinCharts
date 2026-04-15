@@ -12,20 +12,20 @@ const principles = [
   },
   {
     title: "Herramienta educativa",
-    text: "Esta calculadora no promete rendimiento. Sirve para visualizar cómo cambia el precio promedio y cómo evoluciona la acumulación según el recorrido del mercado.",
+    text: "No promete rendimiento. Ayuda a visualizar cómo cambia el precio promedio y cómo evoluciona la acumulación según el recorrido del mercado.",
   },
 ] as const;
 
 const notes = [
   "La simulación usa una transición simple entre precio inicial y final para que el ejemplo sea fácil de entender.",
   "No contempla comisiones, slippage ni impuestos.",
-  "Es una pieza pedagógica para BitAtlas, no una recomendación financiera.",
+  "Tómalo como una referencia educativa, no como una recomendación financiera.",
 ] as const;
 
 export const metadata = {
   title: "Calculadora DCA de Bitcoin",
   description:
-    "Simulador simple de Dollar Cost Averaging para practicar compras periódicas de Bitcoin dentro de BitAtlas.",
+    "Simulador simple de Dollar Cost Averaging para practicar compras periódicas de Bitcoin.",
 };
 
 export default function DcaCalculatorPage() {
@@ -46,9 +46,9 @@ export default function DcaCalculatorPage() {
                 Una calculadora simple para practicar compras periódicas de Bitcoin.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
-                Este módulo está pensado para explicar la lógica del DCA de una
-                forma amable: cuánto invertirías, cuánto BTC podrías acumular y
-                qué precio promedio estarías construyendo con el paso del tiempo.
+                Acá puedes probar una idea simple de DCA sin vueltas: ver cuánto
+                invertirías, cuánto BTC podrías acumular y qué precio promedio
+                irías construyendo con el tiempo.
               </p>
             </div>
 
@@ -128,8 +128,8 @@ export default function DcaCalculatorPage() {
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-text-secondary">
-            Ajusta pocos parámetros y usa la tabla como referencia visual para
-            entender cómo cambia la acumulación de BTC en una estrategia DCA.
+            Ajusta pocos parámetros y mira cómo cambia la acumulación de BTC a
+            medida que repartes compras en el tiempo.
           </p>
         </div>
 
@@ -185,9 +185,8 @@ export default function DcaCalculatorPage() {
                 Combina esta práctica con contexto de mercado.
               </h3>
               <p className="mt-3 text-sm leading-7 text-text-secondary">
-                La calculadora te enseña la mecánica. El Rainbow Chart y el
-                precio realizado pueden ayudarte a sumar perspectiva histórica y
-                on-chain.
+                El Rainbow Chart y el precio realizado pueden ayudarte a sumar
+                perspectiva histórica y on-chain a esta forma de acumular.
               </p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <Link

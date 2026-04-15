@@ -3,7 +3,7 @@ import { RealizedPriceChart } from "./realized-price-chart";
 export const metadata = {
   title: "Precio Realizado de Bitcoin",
   description:
-    "Gráfico del precio realizado de Bitcoin con datos on-chain y visualización integrada en BitAtlas.",
+    "Gráfico del precio realizado de Bitcoin con datos on-chain.",
 };
 
 export default function RealizedPage() {
@@ -24,9 +24,8 @@ export default function RealizedPage() {
                 El costo base on-chain de Bitcoin en una lectura simple y visual.
               </h1>
               <p className="max-w-3xl text-base leading-7 text-text-secondary sm:text-lg">
-                Esta vista muestra el precio realizado de BTC para entender dónde
-                está el costo agregado del mercado y sumar una capa más profunda
-                al análisis del ciclo.
+                El precio realizado ayuda a ver dónde está el costo agregado del
+                mercado y suma una capa más profunda al análisis del ciclo.
               </p>
             </div>
           </div>

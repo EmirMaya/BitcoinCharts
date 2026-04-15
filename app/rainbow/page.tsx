@@ -5,7 +5,7 @@ const summaryCards = [
   {
     label: "Lectura",
     title: "Valoración histórica",
-    text: "El Rainbow Chart sirve para ubicar el precio de BTC dentro de un marco de largo plazo y no solo dentro del ruido diario.",
+    text: "Ayuda a ubicar el precio de BTC dentro de un marco de largo plazo y no solo dentro del ruido diario.",
   },
   {
     label: "Uso",
@@ -15,7 +15,7 @@ const summaryCards = [
   {
     label: "Enfoque",
     title: "Bitcoin-first",
-    text: "Esta vista está pensada como módulo central de BitAtlas y conecta con la idea editorial de leer Bitcoin antes que perseguir titulares.",
+    text: "La idea es leer Bitcoin con calma antes que correr detrás de titulares o movimientos aislados.",
   },
 ] as const;
 
@@ -60,12 +60,11 @@ export default function RainbowPage() {
 
             <div className="space-y-5">
               <h1 className="max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl">
-                Bitcoin Rainbow Chart con una lectura visual más consistente con BitAtlas.
+                Bitcoin Rainbow Chart para mirar el ciclo con más perspectiva.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
-                El gráfico se mantiene intacto. La mejora está en el contexto:
-                una página más editorial, homogénea con la home y preparada para
-                orientar mejor la lectura de Bitcoin.
+                Sirve para ver a Bitcoin dentro de un marco histórico más amplio
+                y no quedarse atrapado en el ruido de cada día.
               </p>
             </div>
 
@@ -109,7 +108,7 @@ export default function RainbowPage() {
                   Guía rápida
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">
-                  Cómo mirar este módulo
+                  Cómo leerlo
                 </h2>
               </div>
 
@@ -143,7 +142,7 @@ export default function RainbowPage() {
         <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
-              Chart Module
+              Histórico
             </p>
             <h2 className="text-3xl font-semibold tracking-tight">
               Vista principal del histórico de Bitcoin
@@ -171,10 +170,10 @@ export default function RainbowPage() {
             </h2>
             <div className="mt-5 space-y-4 text-sm leading-7 text-text-secondary">
               <p>
-                Este gráfico compara el precio de Bitcoin contra bandas de
-                valoración histórica. En el eje X ves el tiempo y en el eje Y
-                el precio en USD con escala logarítmica, lo que permite medir
-                mejor variaciones muy grandes a lo largo de distintos ciclos.
+                Acá ves el precio de Bitcoin frente a bandas de valoración
+                histórica. En el eje X está el tiempo y en el eje Y el precio
+                en USD con escala logarítmica, algo útil cuando comparas
+                movimientos muy grandes entre distintos ciclos.
               </p>
               <p>
                 Las zonas frías suelen representar períodos donde BTC cotiza
@@ -209,22 +208,22 @@ export default function RainbowPage() {
 
             <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
-                Siguiente módulo
+                Para seguir
               </p>
               <h3 className="mt-3 text-2xl font-semibold">
-                Esta página ya quedó lista para crecer.
+                También puedes sumar más capas de contexto.
               </h3>
               <p className="mt-3 text-sm leading-7 text-text-secondary">
-                Si después querés completar la experiencia, acá encajan muy bien
-                bloques como métricas rápidas de BTC, eventos de halving,
-                resúmenes macro o contexto on-chain.
+                Métricas rápidas de BTC, eventos de halving, resúmenes macro o
+                más señales on-chain encajan muy bien cuando quieres profundizar
+                el análisis.
               </p>
               <div className="mt-6">
                 <Link
                   href="/"
                   className="inline-flex items-center justify-center rounded-full border border-btc-soft bg-btc px-6 py-3 text-sm font-semibold text-black"
                 >
-                  Volver a BitAtlas
+                  Volver al inicio
                 </Link>
               </div>
             </div>

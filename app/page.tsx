@@ -62,15 +62,15 @@ const chartHighlights = [
 const principles = [
   {
     title: "Bitcoin-first",
-    text: "BitAtlas prioriza herramientas y lecturas centradas en BTC antes que perseguir ruido especulativo del mercado.",
+    text: "Bitcoin va primero: menos ruido especulativo y más atención a lo que realmente ayuda a leer el mercado con calma.",
   },
   {
     title: "Menos hype, más contexto",
-    text: "La propuesta visual busca explicar zonas, escenarios y estructura de mercado sin vender certezas imposibles.",
+    text: "Zonas, escenarios y estructura de mercado para entender mejor lo que pasa, sin vender certezas imposibles.",
   },
   {
     title: "Diseño utilizable",
-    text: "Modo claro y oscuro, jerarquía editorial fuerte y bloques rápidos de escaneo para que la información sea fácil de consumir.",
+    text: "Modo claro y oscuro, buena jerarquía visual y bloques rápidos para encontrar lo importante sin esfuerzo.",
   },
 ] as const;
 
@@ -92,7 +92,7 @@ export default function Home() {
                 La portada para entender Bitcoin con contexto, no con ansiedad.
               </h1>
               <p className="max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">
-                Una plataforma especializada para analizar ciclos de mercado,
+                Acá encuentras una forma más clara de leer ciclos de mercado,
                 zonas de valoración y métricas on-chain de Bitcoin.
               </p>
             </div>
@@ -151,8 +151,8 @@ export default function Home() {
                     Lectura de largo plazo
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Seguimiento visual del mercado para no perder perspectiva en
-                    días de volatilidad.
+                    Para mirar el mercado con algo de distancia cuando la
+                    volatilidad aprieta.
                   </p>
                 </div>
 
@@ -164,8 +164,8 @@ export default function Home() {
                     Spot vs. costo base
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    El precio realizado suma una segunda capa para entender si el
-                    mercado cotiza cerca o lejos del costo agregado.
+                    Para ver si el mercado cotiza cerca o lejos del costo base
+                    agregado de los holders.
                   </p>
                 </div>
 
@@ -177,8 +177,8 @@ export default function Home() {
                     Entrá al hub de gráficos
                   </p>
                   <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Usa el Rainbow Chart y el precio realizado como panel
-                    complementario para una lectura más completa de BTC.
+                    El Rainbow Chart y el precio realizado se complementan bien
+                    cuando quieres una lectura más completa de BTC.
                   </p>
                 </div>
               </div>
@@ -202,9 +202,9 @@ export default function Home() {
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-text-secondary">
-            El Rainbow Chart te da una lectura histórica rápida. El precio
-            realizado añade una capa on-chain para comparar valoración y costo
-            base del mercado en una sola navegación.
+            El Rainbow Chart ayuda a ubicar el momento del ciclo. El precio
+            realizado suma una capa on-chain para comparar valoración y costo
+            base del mercado con más contexto.
           </p>
         </div>
 
@@ -292,7 +292,7 @@ export default function Home() {
                   {item.text}
                 </p>
               </div>
-            ))}M
+            ))}
           </div>
         </div>
       </section>
@@ -302,14 +302,14 @@ export default function Home() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
-                Inicio BitAtlas
+                Siguiente paso
               </p>
               <h2 className="text-3xl font-semibold tracking-tight">
-                Base lista para sumar métricas, paneles y nuevas lecturas de BTC.
+                Más contexto para seguir sumando métricas y lecturas útiles de BTC.
               </h2>
               <p className="text-sm leading-7 text-text-secondary">
-                BitAtlas consolida una propuesta orientada a claridad,
-                consistencia y crecimiento sostenido.
+                La idea es que todo se sienta claro, consistente y fácil de usar
+                a medida que el análisis vaya creciendo.
               </p>
             </div>
 

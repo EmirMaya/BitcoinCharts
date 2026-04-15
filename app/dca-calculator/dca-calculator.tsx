@@ -53,12 +53,67 @@ function formatPercentage(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+function buildPurchaseChartPoints(
+  prices: number[],
+  width: number,
+  height: number,
+  padding: number,
+) {
+  if (prices.length === 0) {
+    return [];
+  }
+
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice || 1;
+
+  return prices.map((price, index) => {
+    const x =
+      padding +
+      (index / Math.max(prices.length - 1, 1)) * (width - padding * 2);
+    const y =
+      height -
+      padding -
+      ((price - minPrice) / range) * (height - padding * 2);
+
+    return { x, y, price, index: index + 1 };
+  });
+}
+
 export default function DcaCalculator() {
-  const [amountPerBuy, setAmountPerBuy] = useState(INITIAL_VALUES.amountPerBuy);
-  const [numberOfBuys, setNumberOfBuys] = useState(INITIAL_VALUES.numberOfBuys);
-  const [startingPrice, setStartingPrice] = useState(INITIAL_VALUES.startingPrice);
-  const [endingPrice, setEndingPrice] = useState(INITIAL_VALUES.endingPrice);
+  const [amountPerBuyInput, setAmountPerBuyInput] = useState(
+    String(INITIAL_VALUES.amountPerBuy),
+  );
+  const [numberOfBuysInput, setNumberOfBuysInput] = useState(
+    String(INITIAL_VALUES.numberOfBuys),
+  );
+  const [startingPriceInput, setStartingPriceInput] = useState(
+    String(INITIAL_VALUES.startingPrice),
+  );
+  const [endingPriceInput, setEndingPriceInput] = useState(
+    String(INITIAL_VALUES.endingPrice),
+  );
   const [frequency, setFrequency] = useState<DcaFrequency>(INITIAL_VALUES.frequency);
+  const parsedAmountPerBuy = Number(amountPerBuyInput);
+  const parsedNumberOfBuys = Number(numberOfBuysInput);
+  const parsedStartingPrice = Number(startingPriceInput);
+  const parsedEndingPrice = Number(endingPriceInput);
+  const amountPerBuy =
+    Number.isFinite(parsedAmountPerBuy) && parsedAmountPerBuy >= 10
+      ? parsedAmountPerBuy
+      : INITIAL_VALUES.amountPerBuy;
+  const numberOfBuys =
+    Number.isFinite(parsedNumberOfBuys) && parsedNumberOfBuys >= 1
+      ? Math.floor(parsedNumberOfBuys)
+      : INITIAL_VALUES.numberOfBuys;
+  const startingPrice =
+    Number.isFinite(parsedStartingPrice) && parsedStartingPrice >= 1000
+      ? parsedStartingPrice
+      : INITIAL_VALUES.startingPrice;
+  const endingPrice =
+    Number.isFinite(parsedEndingPrice) && parsedEndingPrice >= 1000
+      ? parsedEndingPrice
+      : INITIAL_VALUES.endingPrice;
 
   const result = calculateDcaPlan({
     amountPerBuy,
@@ -72,6 +127,24 @@ export default function DcaCalculator() {
   const frequencyLabel = getFrequencyLabel(frequency);
   const isPositive = summary.profitLoss >= 0;
   const beatsLumpSum = summary.lumpSumDifference >= 0;
+  const chartWidth = 680;
+  const chartHeight = 260;
+  const chartPadding = 26;
+  const purchasePrices = purchases.map((purchase) => purchase.price);
+  const chartPoints = buildPurchaseChartPoints(
+    purchasePrices,
+    chartWidth,
+    chartHeight,
+    chartPadding,
+  );
+  const minChartPrice = Math.min(...purchasePrices);
+  const maxChartPrice = Math.max(...purchasePrices);
+  const chartRange = maxChartPrice - minChartPrice || 1;
+  const averagePriceY =
+    chartHeight -
+    chartPadding -
+    ((summary.averageBuyPrice - minChartPrice) / chartRange) *
+      (chartHeight - chartPadding * 2);
 
   return (
     <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
@@ -99,10 +172,9 @@ export default function DcaCalculator() {
               type="number"
               min={10}
               step={10}
-              value={amountPerBuy}
-              onChange={(event) =>
-                setAmountPerBuy(Math.max(10, Number(event.target.value) || 10))
-              }
+              value={amountPerBuyInput}
+              onChange={(event) => setAmountPerBuyInput(event.target.value)}
+              onBlur={() => setAmountPerBuyInput(String(amountPerBuy))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
           </label>
@@ -116,10 +188,9 @@ export default function DcaCalculator() {
               min={1}
               max={120}
               step={1}
-              value={numberOfBuys}
-              onChange={(event) =>
-                setNumberOfBuys(Math.max(1, Number(event.target.value) || 1))
-              }
+              value={numberOfBuysInput}
+              onChange={(event) => setNumberOfBuysInput(event.target.value)}
+              onBlur={() => setNumberOfBuysInput(String(numberOfBuys))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
           </label>
@@ -132,10 +203,9 @@ export default function DcaCalculator() {
               type="number"
               min={1000}
               step={1000}
-              value={startingPrice}
-              onChange={(event) =>
-                setStartingPrice(Math.max(1000, Number(event.target.value) || 1000))
-              }
+              value={startingPriceInput}
+              onChange={(event) => setStartingPriceInput(event.target.value)}
+              onBlur={() => setStartingPriceInput(String(startingPrice))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
           </label>
@@ -148,10 +218,9 @@ export default function DcaCalculator() {
               type="number"
               min={1000}
               step={1000}
-              value={endingPrice}
-              onChange={(event) =>
-                setEndingPrice(Math.max(1000, Number(event.target.value) || 1000))
-              }
+              value={endingPriceInput}
+              onChange={(event) => setEndingPriceInput(event.target.value)}
+              onBlur={() => setEndingPriceInput(String(endingPrice))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
           </label>
@@ -253,6 +322,157 @@ export default function DcaCalculator() {
                 ? "En esta simulación el DCA acumula más BTC que una compra única al inicio, algo que suele ocurrir cuando el precio cae o pasa tiempo en niveles más bajos."
                 : "En esta simulación una compra única al inicio habría acumulado más BTC. Eso también es normal: si el precio sube con fuerza desde el comienzo, escalonar entradas puede comprar menos cantidad."}
             </p>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
+                Comparación
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight">
+                DCA frente a compra única
+              </h3>
+            </div>
+            <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+              Mismo capital
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-background p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Estrategia DCA
+              </p>
+              <p className="mt-3 text-2xl font-semibold">
+                {formatBitcoin(summary.totalBitcoin)}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                Precio medio construido: {formatCurrency(summary.averageBuyPrice)}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-background p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                Compra única al inicio
+              </p>
+              <p className="mt-3 text-2xl font-semibold">
+                {formatBitcoin(summary.lumpSumBitcoin)}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-text-secondary">
+                Todo el capital entra al precio inicial:{" "}
+                {formatCurrency(startingPrice)}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-border bg-[linear-gradient(135deg,var(--background-card),var(--background-secondary))] p-4">
+            <p className="text-sm leading-7 text-text-secondary">
+              {beatsLumpSum
+                ? `El DCA termina con ${formatBitcoin(
+                    summary.lumpSumDifference,
+                  )} más que la compra única en este recorrido.`
+                : `La compra única termina con ${formatBitcoin(
+                    Math.abs(summary.lumpSumDifference),
+                  )} más que el DCA en este recorrido.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
+                Visual
+              </p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight">
+                Recorrido de compras y precio promedio final
+              </h3>
+            </div>
+            <p className="text-sm leading-6 text-text-secondary">
+              Cada punto pequeño representa una compra. El punto grande marca el
+              precio promedio final del plan.
+            </p>
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-2xl border border-border bg-[linear-gradient(180deg,var(--background),var(--background-secondary))] p-4">
+            <svg
+              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+              className="h-auto w-full"
+              role="img"
+              aria-label="Gráfico de compras periódicas y precio promedio final"
+            >
+              <line
+                x1={chartPadding}
+                y1={averagePriceY}
+                x2={chartWidth - chartPadding}
+                y2={averagePriceY}
+                stroke="rgba(247,147,26,0.45)"
+                strokeDasharray="6 7"
+              />
+
+              {chartPoints.map((point, index) => {
+                const nextPoint = chartPoints[index + 1];
+
+                return (
+                  <g key={point.index}>
+                    {nextPoint ? (
+                      <line
+                        x1={point.x}
+                        y1={point.y}
+                        x2={nextPoint.x}
+                        y2={nextPoint.y}
+                        stroke="rgba(148,163,184,0.4)"
+                        strokeWidth="1.5"
+                      />
+                    ) : null}
+                    <circle
+                      cx={point.x}
+                      cy={point.y}
+                      r="5"
+                      fill="var(--price-line-color)"
+                    />
+                  </g>
+                );
+              })}
+
+              <circle
+                cx={chartWidth / 2}
+                cy={averagePriceY}
+                r="10"
+                fill="#f7931a"
+                stroke="var(--background-card)"
+                strokeWidth="3"
+              />
+            </svg>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border bg-card px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                  Precio más bajo
+                </p>
+                <p className="mt-2 text-lg font-semibold">
+                  {formatCurrency(minChartPrice)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                  Precio promedio
+                </p>
+                <p className="mt-2 text-lg font-semibold">
+                  {formatCurrency(summary.averageBuyPrice)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border bg-card px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                  Precio más alto
+                </p>
+                <p className="mt-2 text-lg font-semibold">
+                  {formatCurrency(maxChartPrice)}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

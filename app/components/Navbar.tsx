@@ -177,7 +177,8 @@ export default function Navbar() {
                         Panel visual
                       </p>
                       <p className="mt-2 text-sm text-text-secondary">
-                        Accesos rápidos a los gráficos principales de BitAtlas.
+                        Accesos rápidos para pasar del contexto histórico a lo
+                        on-chain y a la práctica de DCA.
                       </p>
                     </div>
                     <div className="mt-2 space-y-1">

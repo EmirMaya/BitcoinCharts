@@ -88,9 +88,8 @@ function fallbackView() {
           No se pudo cargar el top 30 en este momento
         </h3>
         <p className="max-w-2xl text-sm leading-7 text-text-secondary">
-          El módulo está preparado para consumir una API gratuita de mercado.
-          Si el proveedor no responde o excede el rate limit, la home sigue
-          funcionando sin romper la página.
+          Si el proveedor no responde o se pasa del rate limit, el resto sigue
+          funcionando con normalidad mientras vuelven los datos.
         </p>
       </div>
     </div>
@@ -153,7 +152,7 @@ export default async function CryptoMarketTable() {
           </p>
           <p className="mt-3 text-lg font-semibold">Momentum diario</p>
           <p className="mt-2 text-sm leading-6 text-text-secondary">
-            Lectura rápida de ganadores y perdedores sin salir de la portada.
+            Para detectar rápido ganadores y perdedores del día.
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4">
