@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
   Line,
+  ReferenceLine,
 } from "recharts";
 import { scaleSymlog } from "d3-scale";
 
@@ -20,6 +21,7 @@ type ApiResponse = {
 type UnknownRecord = Record<string, unknown>;
 
 type Point = {
+  ts: number;
   date: string;
   price?: number;
   baseline?: number;
@@ -35,6 +37,14 @@ function toMs(ts: number) {
   return ts < 10_000_000_000 ? ts * 1000 : ts;
 }
 
+function dateStrToUtcMs(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
+    return NaN;
+  }
+  return Date.UTC(y, m - 1, d);
+}
+
 function isRecord(v: unknown): v is UnknownRecord {
   return typeof v === "object" && v !== null;
 }
@@ -47,6 +57,7 @@ function getMessage(e: unknown): string {
 const BAND_MULTIPLIERS = [
   0.25, 0.4, 0.65, 1.0, 1.6, 2.6, 4.2, 6.8, 11.0,
 ] as const;
+const BAND_TIGHTENING = 0.80;
 
 // colores temporales (después los reemplazamos por metadata.zoneColors del API)
 const FALLBACK_ZONE_COLORS = [
@@ -61,12 +72,38 @@ const FALLBACK_ZONE_COLORS = [
   "#FF0000",
 ] as const;
 
+const BAND_LABELS: string[] = [
+  "Bitcoin está muerto",
+  "Zona de venta masiva",
+  "Compra!",
+  "Buena zona de acumulación",
+  "Todavia está en descuento",
+  "HODL!",
+  "Empieza la burbuja?",
+  "Toma de ganancias",
+  "Burbuja 100% VENDE!",
+];
+
 // epsilon para log (nunca 0)
 const EPS = 1e-9;
 const DAY_MS = 1000 * 60 * 60 * 24;
 const BITCOIN_GENESIS_MS = Date.UTC(2009, 0, 3);
-const CHART_START_DATE = "2012-01-01";
+const CHART_START_MS = Date.UTC(2012, 0, 1);
 const CHART_END_MS = Date.UTC(2028, 0, 1);
+const HALVING_DATES = [
+  "2012-11-28",
+  "2016-07-09",
+  "2020-05-11",
+  "2024-04-20",
+] as const;
+const HALVING_LINE_DASH = "6 6";
+const GUIDE_LINE_DASH = "3 6";
+
+type LegendPayloadEntry = {
+  color?: string;
+  dataKey?: unknown;
+  value?: string;
+};
 
 export default function RainbowChart() {
   const [rows, setRows] = useState<Point[]>([]);
@@ -142,6 +179,7 @@ export default function RainbowChart() {
           const baseline = Math.exp(a + b * x);
 
           const row: Point = {
+            ts: tsMs,
             date: toDateLabel(tsMs),
             price,
             baseline,
@@ -149,7 +187,8 @@ export default function RainbowChart() {
 
           // Zonas absolutas (límites)
           BAND_MULTIPLIERS.forEach((m, i) => {
-            row[`zone_${i}`] = Math.max(EPS, baseline * m);
+            const tightenedMultiplier = Math.exp(Math.log(m) * BAND_TIGHTENING);
+            row[`zone_${i}`] = Math.max(EPS, baseline * tightenedMultiplier);
           });
 
           // Bandas por rango entre límites consecutivos: [zone_i, zone_{i+1}]
@@ -192,25 +231,49 @@ export default function RainbowChart() {
     run();
   }, []);
 
-  const allRows = useMemo(
-    () => rows.filter((row) => row.date >= CHART_START_DATE),
-    [rows],
-  );
+  const allRows = useMemo(() => rows.filter((row) => row.ts >= CHART_START_MS), [rows]);
   const hasData = allRows.length > 0;
 
   const bandKeys = useMemo(
     () => BAND_MULTIPLIERS.map((_, i) => `band_${i}`),
     [],
   );
+  const halvingMarkers = useMemo(() => {
+    if (allRows.length === 0) return [];
+    const minTs = allRows[0]?.ts ?? CHART_START_MS;
+    const maxTs = allRows[allRows.length - 1]?.ts ?? CHART_END_MS;
+    return HALVING_DATES.map((date) => dateStrToUtcMs(date)).filter(
+      (ts): ts is number => Number.isFinite(ts) && ts >= minTs && ts <= maxTs,
+    );
+  }, [allRows]);
+  const xGuideMarkers = useMemo(() => {
+    if (allRows.length === 0) return [];
+    const firstTs = allRows[0]?.ts;
+    const lastTs = allRows[allRows.length - 1]?.ts;
+    if (!Number.isFinite(firstTs) || !Number.isFinite(lastTs)) return [];
+    const startYear = new Date(firstTs).getUTCFullYear();
+    const endYear = new Date(lastTs).getUTCFullYear();
+    if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) return [];
+
+    const markers: number[] = [];
+    for (let year = startYear; year <= endYear; year += 1) {
+      if (year % 2 !== 0) continue;
+      const ts = Date.UTC(year, 0, 1);
+      if (ts >= firstTs && ts <= lastTs) {
+        markers.push(ts);
+      }
+    }
+    return markers;
+  }, [allRows]);
 
   const hasPrice = Boolean(allRows[0]?.price);
-  const hasBaseline = Boolean(allRows[0]?.baseline);
   // c=1 aproxima mejor distancias por década sin perder el 0 visible.
   const yScale = useMemo(() => scaleSymlog().constant(1), []);
   const yTicks = useMemo(() => {
     let maxY = 10;
     for (const row of allRows) {
-      for (const v of Object.values(row)) {
+      for (const [key, v] of Object.entries(row)) {
+        if (key === "ts") continue;
         if (typeof v === "number" && Number.isFinite(v)) {
           maxY = Math.max(maxY, v);
         }
@@ -227,12 +290,88 @@ export default function RainbowChart() {
     }
     return ticks;
   }, [allRows]);
+  const yGuideTicks = useMemo(() => {
+    let maxY = 10;
+    for (const row of allRows) {
+      for (const [key, v] of Object.entries(row)) {
+        if (key === "ts") continue;
+        if (typeof v === "number" && Number.isFinite(v)) {
+          maxY = Math.max(maxY, v);
+        }
+      }
+    }
+    const maxExp = Math.max(1, Math.ceil(Math.log10(maxY)));
+    const ticks = [0];
+    for (let exp = 0; exp <= maxExp; exp += 1) {
+      ticks.push(10 ** exp);
+    }
+    return ticks;
+  }, [allRows]);
   const yTickFormatter = (v: number) => {
-    if (v === 0) return "0";
+    if (v === 0) return "$0";
     const exp = Math.log10(v);
     const isMajor = Math.abs(exp - Math.round(exp)) < 1e-10 && v >= 10;
     if (!isMajor) return "";
-    return Intl.NumberFormat("en-US").format(v);
+    return `$${Intl.NumberFormat("en-US").format(v)}`;
+  };
+  const usdFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 2,
+      }),
+    [],
+  );
+  const renderLegend = ({
+    payload,
+  }: {
+    payload?: readonly LegendPayloadEntry[];
+  }) => {
+    if (!payload || payload.length === 0) return null;
+    const byKey = new Map<string, LegendPayloadEntry>();
+    for (const entry of payload) {
+      byKey.set(String(entry.dataKey ?? ""), entry);
+    }
+    const firstRowKeys = ["band_0", "band_1", "band_2", "band_3", "band_4"];
+    const secondRowKeys = ["band_5", "band_6", "band_7", "band_8", "price"];
+    const firstRow = firstRowKeys
+      .map((k) => byKey.get(k))
+      .filter((v): v is LegendPayloadEntry => Boolean(v));
+    const secondRow = secondRowKeys
+      .map((k) => byKey.get(k))
+      .filter((v): v is LegendPayloadEntry => Boolean(v));
+
+    const renderChip = (entry: LegendPayloadEntry) => (
+      (() => {
+        const chipStyle: CSSProperties & {
+          "--legend-chip-item-color": string;
+        } = {
+          borderColor: entry.color,
+          backgroundColor: "var(--legend-chip-bg)",
+          "--legend-chip-item-color": entry.color ?? "var(--foreground)",
+        };
+
+        return (
+      <span
+        key={String(entry.dataKey ?? entry.value)}
+        className="rounded-md border-[2px] px-3 py-1 text-[13px] leading-tight text-[color:var(--legend-chip-text)] dark:text-[color:var(--legend-chip-item-color)]"
+        style={chipStyle}
+      >
+        {entry.value}
+      </span>
+        );
+      })()
+    );
+
+    return (
+      <div className="px-3 pt-8 pb-2">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-3">{firstRow.map(renderChip)}</div>
+        <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-3">
+          {secondRow.map(renderChip)}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -265,24 +404,110 @@ export default function RainbowChart() {
       <div className="text-xs text-neutral-500">Rango: ALL</div>
 
       {/* Chart (Paso 5.3: zonas entre líneas + price) */}
-      <div className="h-[40rem] w-full">
+      <div className="h-160 w-full bg-(--chart-plot-bg)">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={allRows}
-            margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
+            margin={{ top: 10, right: 20, bottom: 72, left: 0 }}
+            style={{ backgroundColor: "var(--chart-plot-bg)" }}
           >
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} minTickGap={40} />
+            <XAxis
+              dataKey="ts"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tick={{ fontSize: 12, fill: "var(--chart-axis-text)" }}
+              axisLine={{ stroke: "var(--chart-axis-line)" }}
+              tickLine={{ stroke: "var(--chart-axis-line)" }}
+              minTickGap={40}
+              tickFormatter={(value) => toDateLabel(Number(value))}
+            />
             <YAxis
-              tick={{ fontSize: 12 }}
-              width={70}
+              tick={{ fontSize: 12, fill: "var(--chart-axis-text)" }}
+              axisLine={{ stroke: "var(--chart-axis-line)" }}
+              tickLine={{ stroke: "var(--chart-axis-line)" }}
+              width={86}
               scale={yScale}
               domain={[0, "dataMax"]}
               ticks={yTicks}
               tickFormatter={yTickFormatter}
               allowDataOverflow
             />
-            <Tooltip />
-            <Legend />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "var(--tooltip-bg)",
+                borderColor: "var(--border-color)",
+                borderRadius: "8px",
+                fontSize: "11px",
+              }}
+              labelStyle={{ color: "#e2e8f0", fontSize: "11px" }}
+              itemStyle={{ fontSize: "11px" }}
+              labelFormatter={(label) => toDateLabel(Number(label))}
+              formatter={(value, name, item) => {
+                let formatted: string;
+                if (Array.isArray(value) && value.length === 2) {
+                  const low = Number(value[0]);
+                  const high = Number(value[1]);
+                  formatted = `${usdFormatter.format(low)} ~ ${usdFormatter.format(high)}`;
+                } else if (typeof value === "number" && Number.isFinite(value)) {
+                  formatted = usdFormatter.format(value);
+                } else {
+                  formatted = String(value);
+                }
+
+                if (String(item?.dataKey ?? "") === "price") {
+                  return [
+                    <span key="price-tooltip-value" style={{ color: "#cbd5e1" }}>
+                      {formatted}
+                    </span>,
+                    name,
+                  ];
+                }
+
+                return formatted;
+              }}
+              itemSorter={(item) => {
+                const key = String(item?.dataKey ?? "");
+                if (key.startsWith("band_")) {
+                  const idx = Number(key.replace("band_", ""));
+                  return Number.isFinite(idx) ? -idx : 0;
+                }
+                if (key === "price") return 1_000_000;
+                return 0;
+              }}
+            />
+            <Legend content={renderLegend} />
+
+            {yGuideTicks.map((value) => (
+              <ReferenceLine
+                key={`guide-y-${value}`}
+                y={value}
+                stroke="var(--chart-guide-line)"
+                strokeWidth={1}
+                strokeOpacity={0.9}
+                strokeDasharray={GUIDE_LINE_DASH}
+                ifOverflow="extendDomain"
+              />
+            ))}
+
+            {halvingMarkers.map((date) => (
+              <ReferenceLine
+                key={`halving-${date}`}
+                x={date}
+                stroke="var(--chart-halving-line)"
+                strokeWidth={2}
+                strokeOpacity={1}
+                strokeDasharray={HALVING_LINE_DASH}
+                label={{
+                  value: "Halving",
+                  position: "insideBottom",
+                  fill: "var(--chart-halving-label)",
+                  fontSize: 10,
+                  offset: 8,
+                }}
+                ifOverflow="extendDomain"
+              />
+            ))}
 
             {/* Bandas arcoiris en log: cada área es un rango [lower, upper] */}
             {bandKeys.map((k, idx) => (
@@ -290,6 +515,7 @@ export default function RainbowChart() {
                 key={k}
                 type="monotone"
                 dataKey={k}
+                name={BAND_LABELS[idx] ?? k}
                 stroke={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                 fill={FALLBACK_ZONE_COLORS[idx % FALLBACK_ZONE_COLORS.length]}
                 fillOpacity={0.35}
@@ -300,23 +526,26 @@ export default function RainbowChart() {
               />
             ))}
 
-            {/* Baseline (línea central) */}
-            {hasBaseline && (
-              <Line
-                type="monotone"
-                dataKey="baseline"
-                dot={false}
-                strokeWidth={2}
-                isAnimationActive={false}
+            {xGuideMarkers.map((date) => (
+              <ReferenceLine
+                key={`guide-x-${date}`}
+                x={date}
+                stroke="var(--chart-guide-line)"
+                strokeWidth={1}
+                strokeOpacity={1}
+                strokeDasharray={GUIDE_LINE_DASH}
+                ifOverflow="extendDomain"
               />
-            )}
+            ))}
 
             {/* Precio */}
             {hasPrice && (
               <Line
                 type="monotone"
                 dataKey="price"
+                name="Precio"
                 dot={false}
+                stroke="var(--price-line-color)"
                 strokeWidth={2}
                 isAnimationActive={false}
               />
@@ -325,8 +554,8 @@ export default function RainbowChart() {
         </ResponsiveContainer>
       </div>
 
-      <p className="text-xs text-neutral-500">
-        Informativo: no es consejo financiero. Paso 5.3: zonas entre límites en escala log.
+      <p className="text-xs text-neutral-700 dark:text-neutral-300">
+        Gráfico totalmente con fines recreativos e informativos: no es consejo financiero.
       </p>
     </div>
   );
