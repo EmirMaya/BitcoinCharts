@@ -37,6 +37,13 @@ const INITIAL_VALUES = {
   frequency: "monthly" as DcaFrequency,
 };
 
+const MAX_NUMERIC_INPUT_DIGITS = 8;
+const MAX_NUMBER_OF_BUYS = 120;
+
+function limitNumericInput(value: string) {
+  return value.replace(/\D/g, "").slice(0, MAX_NUMERIC_INPUT_DIGITS);
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-AR", {
     style: "currency",
@@ -104,7 +111,7 @@ export default function DcaCalculator() {
       : INITIAL_VALUES.amountPerBuy;
   const numberOfBuys =
     Number.isFinite(parsedNumberOfBuys) && parsedNumberOfBuys >= 1
-      ? Math.floor(parsedNumberOfBuys)
+      ? Math.min(Math.floor(parsedNumberOfBuys), MAX_NUMBER_OF_BUYS)
       : INITIAL_VALUES.numberOfBuys;
   const startingPrice =
     Number.isFinite(parsedStartingPrice) && parsedStartingPrice >= 1000
@@ -173,7 +180,9 @@ export default function DcaCalculator() {
               min={10}
               step={10}
               value={amountPerBuyInput}
-              onChange={(event) => setAmountPerBuyInput(event.target.value)}
+              onChange={(event) =>
+                setAmountPerBuyInput(limitNumericInput(event.target.value))
+              }
               onBlur={() => setAmountPerBuyInput(String(amountPerBuy))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
@@ -186,10 +195,12 @@ export default function DcaCalculator() {
             <input
               type="number"
               min={1}
-              max={120}
+              max={MAX_NUMBER_OF_BUYS}
               step={1}
               value={numberOfBuysInput}
-              onChange={(event) => setNumberOfBuysInput(event.target.value)}
+              onChange={(event) =>
+                setNumberOfBuysInput(limitNumericInput(event.target.value))
+              }
               onBlur={() => setNumberOfBuysInput(String(numberOfBuys))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
@@ -204,7 +215,9 @@ export default function DcaCalculator() {
               min={1000}
               step={1000}
               value={startingPriceInput}
-              onChange={(event) => setStartingPriceInput(event.target.value)}
+              onChange={(event) =>
+                setStartingPriceInput(limitNumericInput(event.target.value))
+              }
               onBlur={() => setStartingPriceInput(String(startingPrice))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
@@ -219,7 +232,9 @@ export default function DcaCalculator() {
               min={1000}
               step={1000}
               value={endingPriceInput}
-              onChange={(event) => setEndingPriceInput(event.target.value)}
+              onChange={(event) =>
+                setEndingPriceInput(limitNumericInput(event.target.value))
+              }
               onBlur={() => setEndingPriceInput(String(endingPrice))}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-btc"
             />
