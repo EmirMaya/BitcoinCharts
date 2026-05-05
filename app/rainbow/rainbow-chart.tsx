@@ -355,7 +355,7 @@ export default function RainbowChart() {
         return (
       <span
         key={String(entry.dataKey ?? entry.value)}
-        className="rounded-md border-[2px] px-3 py-1 text-[13px] leading-tight text-[color:var(--legend-chip-text)] dark:text-[color:var(--legend-chip-item-color)]"
+        className="rounded-md border-2 px-3 py-1 text-[13px] leading-tight text-(--legend-chip-text) dark:text-(--legend-chip-item-color)"
         style={chipStyle}
       >
         {entry.value}

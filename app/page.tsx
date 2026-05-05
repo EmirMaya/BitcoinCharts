@@ -214,7 +214,7 @@ export default function Home() {
               key={chart.title}
               className="group overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
             >
-              <div className={`h-28 bg-gradient-to-br ${chart.accent}`} />
+              <div className={`h-28 bg-linear-to-br ${chart.accent}`} />
               <div className="space-y-5 p-6">
                 <div className="space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-btc">
